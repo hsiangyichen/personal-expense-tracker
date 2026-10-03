@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id             String        @id @default(cuid())
+  name           String
+  normalizedName String        @unique
+  color          String
+  createdAt      DateTime      @default(now())
+  transactions   Transaction[]
+  budgets        Budget[]
+
+  @@map("categories")
+}
+
+model ImportBatch {
+  id                   String        @id @default(cuid())
+  fileName             String
+  fileFingerprint      String
+  currency             String        @default("CAD")
+  importedAt           DateTime      @default(now())
+  rowCount             Int
+  expenseCount         Int
+  excludedPaymentCount Int
+  refundCount          Int
+  transactions         Transaction[]
+
+  @@index([fileFingerprint])
+  @@map("imports")
+}
+
+model Transaction {
+  id                  String      @id @default(cuid())
+  transactionDate     String
+  postDate            String?
+  sourceAmountMinor   Int
+  spendingAmountMinor Int
+  currency            String      @default("CAD")
+  merchant            String
+  sourceDetails       String?
+  categoryId          String?
+  note                String?
+  kind                String
+  reviewStatus        String
+  source              String
+  sourceType          String?
+  importId            String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  category            Category?   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  import              ImportBatch? @relation(fields: [importId], references: [id], onDelete: Restrict)
+
+  @@index([transactionDate])
+  @@index([categoryId, transactionDate])
+  @@index([importId])
+  @@map("transactions")
+}
+
+model Budget {
+  id          String   @id @default(cuid())
+  categoryId  String
+  monthKey    String
+  amountMinor Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, monthKey])
+  @@index([monthKey])
+  @@map("budgets")
+}
