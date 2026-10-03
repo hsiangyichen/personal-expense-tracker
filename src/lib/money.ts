@@ -37,8 +37,8 @@ export function parsePositiveCadAmountToCents(value: string): number {
   return Number(amountMinor);
 }
 
-export function formatCadFromCents(amountMinor: number): string {
-  if (!Number.isSafeInteger(amountMinor)) {
+export function formatCadFromCents(amountMinor: number | bigint): string {
+  if (typeof amountMinor === "number" && !Number.isSafeInteger(amountMinor)) {
     throw new MoneyValidationError("Amount must use whole cents.");
   }
 

@@ -46,6 +46,10 @@ describe("CAD money helpers", () => {
     expect(formatCadFromCents(amountMinor)).toBe(expected);
   });
 
+  it("formats exact BigInt totals", () => {
+    expect(formatCadFromCents(4_294_967_294n)).toBe("$42,949,672.94 CAD");
+  });
+
   it("rejects fractional minor units", () => {
     expect(() => formatCadFromCents(1.5)).toThrow(
       "Amount must use whole cents.",
