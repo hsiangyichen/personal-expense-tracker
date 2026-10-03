@@ -41,18 +41,18 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 2: Manual expense management
 
-- [ ] **T019 — Define expense validation.** Validate CAD, positive integer cents, `YYYY-MM-DD` dates, merchant, category, and optional note.
-- [ ] **T020 — Build the money helpers.** Convert display amounts to integer cents and format cents as CAD without floating-point calculations.
-- [ ] **T021 — Test the money helpers.** Cover whole dollars, cents, invalid decimals, zero, negative manual amounts, and large values.
-- [ ] **T022 — Build the expense form.** Add date, amount, merchant, category, and note fields.
-- [ ] **T023 — Create manual expenses.** Validate and save a manual expense with matching source and spending amounts.
-- [ ] **T024 — Build the expense list.** Show date, merchant, category, amount, and source.
-- [ ] **T025 — Add month filtering.** Filter the list using the transaction date without timezone conversion.
-- [ ] **T026 — Add category filtering.** Filter the list by one category.
-- [ ] **T027 — Add expense search.** Search merchant and original CSV details text.
-- [ ] **T028 — Edit an expense.** Load an existing expense, validate changes, and save them.
-- [ ] **T029 — Delete an expense safely.** Require confirmation and remove only the selected transaction.
-- [ ] **T030 — Add expense flow tests.** Cover create, validation failure, filtering, search, edit, delete, and persistence after reload.
+- [x] **T019 — Define expense validation.** Validate CAD, positive integer cents, `YYYY-MM-DD` dates, merchant, category, and optional note.
+- [x] **T020 — Build the money helpers.** Convert display amounts to integer cents and format cents as CAD without floating-point calculations.
+- [x] **T021 — Test the money helpers.** Cover whole dollars, cents, invalid decimals, zero, negative manual amounts, and large values.
+- [x] **T022 — Build the expense form.** Add date, amount, merchant, category, and note fields.
+- [x] **T023 — Create manual expenses.** Validate and save a manual expense with matching source and spending amounts.
+- [x] **T024 — Build the expense list.** Show date, merchant, category, amount, and source.
+- [x] **T025 — Add month filtering.** Filter the list using the transaction date without timezone conversion.
+- [x] **T026 — Add category filtering.** Filter the list by one category.
+- [x] **T027 — Add expense search.** Search merchant and original CSV details text.
+- [x] **T028 — Edit an expense.** Load an existing expense, validate changes, and save them.
+- [x] **T029 — Delete an expense safely.** Require confirmation and remove only the selected transaction.
+- [x] **T030 — Add expense flow tests.** Cover create, validation failure, filtering, search, edit, delete, and persistence after reload.
 
 **Milestone complete when:** A user can manage one month of manual expenses without editing the database directly.
 
