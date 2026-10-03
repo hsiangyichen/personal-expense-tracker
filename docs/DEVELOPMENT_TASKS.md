@@ -77,30 +77,30 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 - [ ] **T042 — Validate CSV dates.** Accept only valid `YYYY-MM-DD` transaction and post dates.
 - [ ] **T043 — Validate CSV amounts.** Accept signed decimal amounts with no more than two decimal places and convert them to cents.
 - [ ] **T044 — Validate CSV currency.** Accept CAD and reject unsupported or mixed currencies.
-- [ ] **T045 — Normalize purchases.** Set purchase spending to a positive amount and initialize merchant from `details`.
-- [ ] **T046 — Normalize payments.** Preserve payment rows with zero spending and no category.
-- [ ] **T047 — Normalize refund candidates.** Mark initiated and settled refund rows for review with zero spending initially.
+- [ ] **T045 — Validate and normalize purchases.** Require a positive source amount, set spending to that positive amount, and initialize merchant from `details`; treat a zero or negative purchase as invalid.
+- [ ] **T046 — Validate and normalize payments.** Require a negative source amount and preserve the payment with zero spending and no category; treat a zero or positive payment as invalid.
+- [ ] **T047 — Normalize refund candidates.** Accept either non-zero source sign, mark initiated and settled refund rows for review, and give them zero spending initially.
 - [ ] **T048 — Preserve source values.** Keep the original type, signed amount, dates, and `details` text unchanged.
-- [ ] **T049 — Test CSV parsing.** Cover reordered headers, quoted commas, blank lines, malformed rows, unsupported types, invalid dates, invalid amounts, and mixed currencies.
+- [ ] **T049 — Test CSV parsing.** Cover reordered headers, quoted commas, blank lines, malformed rows, unsupported types, invalid dates, invalid amounts, mixed currencies, negative purchases, positive payments, and both refund source signs.
 
 **Milestone complete when:** The supported CSV can be parsed into validated review rows without writing to the database.
 
 ## Milestone 5: CSV review and import
 
 - [ ] **T050 — Calculate a file fingerprint.** Hash the original file bytes before parsing.
-- [ ] **T051 — Detect repeated files.** Warn when an import has the same fingerprint as an earlier import.
+- [ ] **T051 — Handle repeated files.** Block an import whose fingerprint matches an earlier import and continue only after an explicit **Import again** decision.
 - [ ] **T052 — Detect possible duplicate rows.** Compare the six source fields and warn without automatically removing either row.
 - [ ] **T053 — Build the import summary.** Show included purchases, excluded payments, refund candidates, invalid rows, and duplicate warnings.
 - [ ] **T054 — Build the row review table.** Let the user inspect every row before saving.
 - [ ] **T055 — Add merchant correction.** Allow merchant edits while preserving `sourceDetails`.
 - [ ] **T056 — Add category assignment.** Require a category for included purchases and confirmed refunds.
-- [ ] **T057 — Add refund decisions.** Let the user select the completed refund row and exclude other stages from spending.
+- [ ] **T057 — Add refund decisions.** Let the user choose **Count as refund** or **Exclude from spending** for every refund candidate; set counted refunds to a negative spending effect and warn when similar rows are both counted.
 - [ ] **T058 — Add duplicate decisions.** Let the user include or exclude each warned row manually.
-- [ ] **T059 — Block unresolved imports.** Prevent saving while invalid rows or required decisions remain unresolved.
+- [ ] **T059 — Resolve or block invalid rows.** Let the user explicitly exclude each invalid row or cancel the import and re-upload a corrected file; prevent saving while invalid rows or required decisions remain unresolved.
 - [ ] **T060 — Save imports atomically.** Create the import and all confirmed transactions in one database transaction.
 - [ ] **T061 — Show the import result.** Display saved, excluded-payment, refund, duplicate-warning, and invalid-row counts.
 - [ ] **T062 — Test import rollback.** Force a failed row and verify that no partial import or transactions remain.
-- [ ] **T063 — Add CSV browser tests.** Cover a successful import, refund resolution, duplicate warnings, repeated-file warnings, and correction before saving.
+- [ ] **T063 — Add CSV browser tests.** Cover a successful import, both refund decisions, similar-refund warnings, duplicate decisions, repeated-file blocking and explicit approval, invalid-row exclusion, and correction before saving.
 
 **Milestone complete when:** A user can review and import the supported statement without counting payments or refund stages incorrectly.
 
@@ -122,10 +122,10 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 - [ ] **T072 — Choose the local data directory.** Resolve and document where the SQLite database and backups are stored.
 - [ ] **T073 — Create a safe backup service.** Use SQLite's backup operation to create a consistent timestamped database copy.
 - [ ] **T074 — Build the backup action.** Let the user create a backup and see its location and completion time.
-- [ ] **T075 — Document restore preparation.** Explain how to stop the application and preserve the current database as a safety copy.
-- [ ] **T076 — Implement restore validation.** Open a selected backup safely and verify its schema before replacement.
-- [ ] **T077 — Verify restored record counts.** Check transaction, category, budget, and import counts after restore.
-- [ ] **T078 — Test backup and restore.** Create data, back it up, change it, restore it, and verify the original data returns.
+- [ ] **T075 — Create the standalone restore command.** Require the web application to be stopped, accept a selected backup path, and refuse to run when the active database is in use.
+- [ ] **T076 — Implement safe database replacement.** Validate the backup's SQLite format and schema, create a timestamped safety copy of the current database, and atomically replace it only after both checks succeed.
+- [ ] **T077 — Verify or roll back the restore.** Open the restored database, check transaction, category, budget, and import counts, and restore the safety copy if verification fails.
+- [ ] **T078 — Test backup and restore.** Cover successful restoration, malformed backups, incompatible schemas, interrupted replacement, failed count verification, and recovery from the safety copy.
 - [ ] **T079 — Add empty states.** Cover no expenses, no results, no budgets, and no imports.
 - [ ] **T080 — Add loading and error states.** Prevent duplicate submissions and show concise recovery actions.
 - [ ] **T081 — Check keyboard and screen-reader use.** Verify forms, dialogs, tables, validation messages, and progress information.

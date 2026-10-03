@@ -64,24 +64,29 @@ Version 1 import rules:
 - Accept `YYYY-MM-DD` transaction and post dates.
 - Accept decimal amounts with up to two decimal places.
 - Accept `CAD` and reject mixed or unsupported currencies with a clear message.
+- Require `Purchase` amounts to be positive and `Payment` amounts to be negative. Treat unexpected type-and-sign combinations as invalid instead of changing their signs automatically.
+- Allow either source sign for refund rows because the provided export uses both; refund rows always require review.
 - Import `Purchase` rows as expenses with a positive spending effect.
 - Import `Payment` rows as payments with zero spending effect.
-- Mark `Refund initiated` and `Refund settled` rows for review. The user selects the row that represents the completed refund; that row receives a negative spending effect, while pending, reversed, or duplicate stages receive zero spending effect.
+- Mark `Refund initiated` and `Refund settled` rows for review with zero spending initially. For each row, the user chooses **Count as refund** or **Exclude from spending**. A counted refund receives a negative spending effect.
+- Warn when similar refund rows are both counted, using matching details, absolute amount, currency, and nearby dates. The warning never changes either decision automatically.
 - Preserve the original type, signed source amount, transaction date, post date, and `details` text for traceability.
 - Initialize `merchant` from the CSV `details` value and allow correction during import review without changing the preserved `sourceDetails`.
 - Warn about possible duplicates using transaction date, post date, type, details, amount, and currency. Never discard matching rows automatically because two legitimate transactions can be identical.
-- Warn when the same file appears to have been imported before.
+- Block a file whose fingerprint matches an earlier import by default. Continue only after the user explicitly chooses **Import again**.
 - Save all confirmed rows in one transaction so a failed import cannot leave a partial result.
 - Process CSV contents locally and never send financial data to a third-party service.
 
-The review screen shows included expenses, excluded payments, refund candidates, invalid rows, and duplicate warnings before anything is saved.
+The review screen shows included expenses, excluded payments, refund candidates, invalid rows, and duplicate warnings before anything is saved. Every invalid row must be explicitly excluded, or the user can cancel the import, fix the source file, and upload it again. Invalid rows are never edited into valid financial data inside the application.
 
 ### Local storage and backup
 
 - Store the SQLite database in the application's local data directory and exclude it from Git.
 - Provide a backup action that uses SQLite's backup operation to create a consistent timestamped copy.
-- Document how to stop the application, preserve the current database as a safety copy, and restore a selected backup while the database connection is closed.
-- Reopen the restored database and verify transaction, category, budget, and import counts before reporting success.
+- Provide a standalone local restore command that runs while the web application is stopped.
+- Validate the selected backup's SQLite format and schema before changing the current database.
+- Copy the current database to a timestamped safety file, then replace it atomically with the validated backup.
+- Reopen the restored database and verify transaction, category, budget, and import counts. Restore the safety copy if verification fails.
 
 ### Dashboard
 
@@ -230,8 +235,9 @@ Keep storage behind a small data-access layer so the local database can be repla
 
 - Upload and validate the supported six-column CSV format.
 - Preview expenses, excluded payments, refund candidates, and invalid rows.
-- Warn about likely duplicate rows and previously imported files.
-- Let the user categorize expenses and resolve refund candidates.
+- Warn about likely duplicate rows and block repeated files until the user explicitly chooses to import again.
+- Let the user categorize expenses, decide each refund row, and explicitly exclude invalid rows.
+- Block saving while any required decision remains unresolved.
 - Save confirmed rows atomically.
 
 **Done when:** A user can safely review and import the provided statement format without counting payments as spending, double-counting refunds, or silently removing legitimate matching transactions.
@@ -249,7 +255,7 @@ Keep storage behind a small data-access layer so the local database can be repla
 - Improve responsive and accessible behavior.
 - Add empty, loading, and error states.
 - Add a documented backup flow that uses SQLite's backup operation to create a timestamped database copy.
-- Add restore instructions and verify that a backup can be opened.
+- Add a standalone restore command that validates the backup, creates a safety copy, replaces the database atomically, and verifies the restored data.
 - Run automated and manual end-to-end tests.
 
 **Done when:** The main workflows work in desktop and mobile-sized browser windows with no known data-loss defects.
