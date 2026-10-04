@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx scripts/run-web.ts dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start",
+    "start": "tsx scripts/run-web.ts start --hostname 127.0.0.1",
     "postinstall": "prisma generate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -19,6 +19,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
+    "db:restore": "tsx scripts/restore-database.ts",
     "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test"
   },
   "dependencies": {

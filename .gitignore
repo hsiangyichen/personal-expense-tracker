@@ -29,13 +29,13 @@ blob-report/
 *.key
 
 # Local financial and user data
-data/
-backups/
-uploads/
-imports/
-statements/
-receipts/
-private-data/
+/data/
+/backups/
+/uploads/
+/imports/
+/statements/
+/receipts/
+/private-data/
 *.db
 *.db-*
 *.sqlite

@@ -37,6 +37,12 @@ export type SaveImportInput = {
   transactions: ImportTransactionInput[];
 };
 
+export function listRecentImports(limit = 10) {
+  return prisma.importBatch.findMany({
+    orderBy: { importedAt: "desc" },
+    take: limit,
+  });
+}
 export function findImportsByFingerprint(fileFingerprint: string) {
   return prisma.importBatch.findMany({
     where: { fileFingerprint },
