@@ -6,6 +6,7 @@ import {
   deleteManualExpense,
   findExpenseById,
   listExpenses,
+  listTransactionsForMonth,
   updateManualExpense,
 } from "@/lib/repositories/transactions";
 
@@ -82,6 +83,40 @@ describe("manual expense repository", () => {
     );
     await expect(deleteManualExpense(expense.id)).resolves.toBe(true);
     await expect(findExpenseById(expense.id)).resolves.toBeNull();
+  });
+
+  it("lists only included transactions inside the selected month", async () => {
+    const category = await prisma.category.findUniqueOrThrow({
+      where: { normalizedName: "groceries" },
+    });
+    const rows = [
+      { transactionDate: "2026-07-31", reviewStatus: "included" },
+      { transactionDate: "2026-08-01", reviewStatus: "included" },
+      { transactionDate: "2026-08-15", reviewStatus: "excluded" },
+      { transactionDate: "2026-08-31", reviewStatus: "included" },
+      { transactionDate: "2026-09-01", reviewStatus: "included" },
+    ].map((row, index) => ({
+      id: randomUUID(),
+      sourceAmountMinor: 100 + index,
+      spendingAmountMinor: 100 + index,
+      currency: "CAD",
+      merchant: `Boundary ${index}`,
+      categoryId: category.id,
+      kind: "expense",
+      source: "manual",
+      ...row,
+    }));
+    createdIds.push(...rows.map(({ id }) => id));
+    await prisma.transaction.createMany({ data: rows });
+
+    const results = await listTransactionsForMonth("2026-08");
+    const resultIds = results.map(({ id }) => id);
+
+    expect(resultIds).toContain(rows[1].id);
+    expect(resultIds).toContain(rows[3].id);
+    expect(resultIds).not.toContain(rows[0].id);
+    expect(resultIds).not.toContain(rows[2].id);
+    expect(resultIds).not.toContain(rows[4].id);
   });
 
   it("searches the preserved CSV source details", async () => {

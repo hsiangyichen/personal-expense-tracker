@@ -46,6 +46,7 @@ export function listExpenses({ monthKey, categoryId, search }: ExpenseFilters) {
 export function listTransactionsForMonth(monthKey: string) {
   return prisma.transaction.findMany({
     where: {
+      reviewStatus: "included",
       transactionDate: {
         gte: `${monthKey}-01`,
         lt: nextMonthStart(monthKey),

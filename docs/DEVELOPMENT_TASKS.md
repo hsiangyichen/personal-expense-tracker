@@ -58,14 +58,14 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 3: Dashboard
 
-- [ ] **T031 — Build monthly total calculation.** Sum `spendingAmountMinor` for the selected month.
-- [ ] **T032 — Build category totals.** Group spending by category using integer cents.
-- [ ] **T033 — Identify the largest category.** Handle ties and months without spending.
-- [ ] **T034 — Build the month selector.** Switch dashboard data between months.
-- [ ] **T035 — Build dashboard summary cards.** Show monthly spending, largest category, and recent expenses.
-- [ ] **T036 — Build the category breakdown.** Show simple category totals without advanced chart interactions.
-- [ ] **T037 — Test dashboard calculations.** Cover purchases, refunds, payments, empty months, ties, and month boundaries.
-- [ ] **T038 — Add a dashboard browser test.** Verify dashboard totals match the filtered expense list.
+- [x] **T031 — Build monthly total calculation.** Sum `spendingAmountMinor` for the selected month.
+- [x] **T032 — Build category totals.** Group spending by category using integer cents.
+- [x] **T033 — Identify the largest category.** Handle ties and months without spending.
+- [x] **T034 — Build the month selector.** Switch dashboard data between months.
+- [x] **T035 — Build dashboard summary cards.** Show monthly spending, largest category, and recent expenses.
+- [x] **T036 — Build the category breakdown.** Show simple category totals without advanced chart interactions.
+- [x] **T037 — Test dashboard calculations.** Cover purchases, refunds, payments, empty months, ties, and month boundaries.
+- [x] **T038 — Add a dashboard browser test.** Verify dashboard totals match the filtered expense list.
 
 **Milestone complete when:** Dashboard totals exactly match the transactions that affect spending for the selected month.
 
