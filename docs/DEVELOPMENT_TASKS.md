@@ -13,46 +13,46 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 0: Project foundation
 
-- [ ] **T001 — Scaffold the application.** Create a Next.js application using TypeScript.
-- [ ] **T002 — Add application styling.** Configure Tailwind CSS and an accessible component library.
-- [ ] **T003 — Add code-quality commands.** Configure formatting, linting, and type checking.
-- [ ] **T004 — Add unit-test tooling.** Configure Vitest and React Testing Library.
-- [ ] **T005 — Add browser-test tooling.** Configure Playwright with desktop and mobile-sized projects.
-- [ ] **T006 — Configure Prisma.** Add Prisma with a local SQLite database.
-- [ ] **T007 — Protect local data.** Exclude database files, backups, and local environment files from Git.
-- [ ] **T008 — Add the application shell.** Create navigation for Dashboard, Expenses, Import CSV, and Categories and budgets.
+- [x] **T001 — Scaffold the application.** Create a Next.js application using TypeScript.
+- [x] **T002 — Add application styling.** Configure Tailwind CSS and an accessible component library.
+- [x] **T003 — Add code-quality commands.** Configure formatting, linting, and type checking.
+- [x] **T004 — Add unit-test tooling.** Configure Vitest and React Testing Library.
+- [x] **T005 — Add browser-test tooling.** Configure Playwright with desktop and mobile-sized projects.
+- [x] **T006 — Configure Prisma.** Add Prisma with a local SQLite database.
+- [x] **T007 — Protect local data.** Exclude database files, backups, and local environment files from Git.
+- [x] **T008 — Add the application shell.** Create navigation for Dashboard, Expenses, Import CSV, and Categories and budgets.
 
 **Milestone complete when:** The empty application starts locally and formatting, linting, type checking, unit tests, and one browser smoke test pass.
 
 ## Milestone 1: Database foundation
 
-- [ ] **T009 — Define transaction constants.** Define supported kinds, sources, review states, and the CAD currency rule.
-- [ ] **T010 — Create the Category model.** Add `name`, unique `normalizedName`, `color`, and timestamps.
-- [ ] **T011 — Create the Import model.** Add file identity, currency, counts, and import time fields.
-- [ ] **T012 — Create the Transaction model.** Add source and spending amounts, merchant, original CSV details, dates, kind, review state, category, import, and timestamps.
-- [ ] **T013 — Create the Budget model.** Add category, `monthKey`, amount, and a unique category-and-month constraint.
-- [ ] **T014 — Add database relationships.** Connect transactions to categories and imports, and budgets to categories.
-- [ ] **T015 — Create the first migration.** Generate and apply the initial SQLite migration.
-- [ ] **T016 — Seed default categories.** Add groceries, dining, transportation, housing, shopping, entertainment, health, and other.
-- [ ] **T017 — Add the data-access boundary.** Create repository functions so pages do not call Prisma directly.
-- [ ] **T018 — Test database constraints.** Verify category uniqueness, budget uniqueness, and required category rules.
+- [x] **T009 — Define transaction constants.** Define supported kinds, sources, review states, and the CAD currency rule.
+- [x] **T010 — Create the Category model.** Add `name`, unique `normalizedName`, `color`, and timestamps.
+- [x] **T011 — Create the Import model.** Add file identity, currency, counts, and import time fields.
+- [x] **T012 — Create the Transaction model.** Add source and spending amounts, merchant, original CSV details, dates, kind, review state, category, import, and timestamps.
+- [x] **T013 — Create the Budget model.** Add category, `monthKey`, amount, and a unique category-and-month constraint.
+- [x] **T014 — Add database relationships.** Connect transactions to categories and imports, and budgets to categories.
+- [x] **T015 — Create the first migration.** Generate and apply the initial SQLite migration.
+- [x] **T016 — Seed default categories.** Add groceries, dining, transportation, housing, shopping, entertainment, health, and other.
+- [x] **T017 — Add the data-access boundary.** Create repository functions so pages do not call Prisma directly.
+- [x] **T018 — Test database constraints.** Verify category uniqueness, budget uniqueness, and required category rules.
 
 **Milestone complete when:** A fresh local database can be created, seeded, queried, and rejected writes cannot break the MVP constraints.
 
 ## Milestone 2: Manual expense management
 
-- [ ] **T019 — Define expense validation.** Validate CAD, positive integer cents, `YYYY-MM-DD` dates, merchant, category, and optional note.
-- [ ] **T020 — Build the money helpers.** Convert display amounts to integer cents and format cents as CAD without floating-point calculations.
-- [ ] **T021 — Test the money helpers.** Cover whole dollars, cents, invalid decimals, zero, negative manual amounts, and large values.
-- [ ] **T022 — Build the expense form.** Add date, amount, merchant, category, and note fields.
-- [ ] **T023 — Create manual expenses.** Validate and save a manual expense with matching source and spending amounts.
-- [ ] **T024 — Build the expense list.** Show date, merchant, category, amount, and source.
-- [ ] **T025 — Add month filtering.** Filter the list using the transaction date without timezone conversion.
-- [ ] **T026 — Add category filtering.** Filter the list by one category.
-- [ ] **T027 — Add expense search.** Search merchant and original CSV details text.
-- [ ] **T028 — Edit an expense.** Load an existing expense, validate changes, and save them.
-- [ ] **T029 — Delete an expense safely.** Require confirmation and remove only the selected transaction.
-- [ ] **T030 — Add expense flow tests.** Cover create, validation failure, filtering, search, edit, delete, and persistence after reload.
+- [x] **T019 — Define expense validation.** Validate CAD, positive integer cents, `YYYY-MM-DD` dates, merchant, category, and optional note.
+- [x] **T020 — Build the money helpers.** Convert display amounts to integer cents and format cents as CAD without floating-point calculations.
+- [x] **T021 — Test the money helpers.** Cover whole dollars, cents, invalid decimals, zero, negative manual amounts, and large values.
+- [x] **T022 — Build the expense form.** Add date, amount, merchant, category, and note fields.
+- [x] **T023 — Create manual expenses.** Validate and save a manual expense with matching source and spending amounts.
+- [x] **T024 — Build the expense list.** Show date, merchant, category, amount, and source.
+- [x] **T025 — Add month filtering.** Filter the list using the transaction date without timezone conversion.
+- [x] **T026 — Add category filtering.** Filter the list by one category.
+- [x] **T027 — Add expense search.** Search merchant and original CSV details text.
+- [x] **T028 — Edit an expense.** Load an existing expense, validate changes, and save them.
+- [x] **T029 — Delete an expense safely.** Require confirmation and remove only the selected transaction.
+- [x] **T030 — Add expense flow tests.** Cover create, validation failure, filtering, search, edit, delete, and persistence after reload.
 
 **Milestone complete when:** A user can manage one month of manual expenses without editing the database directly.
 

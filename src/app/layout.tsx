@@ -1,0 +1,21 @@
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { AppShell } from "@/components/app-shell";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Personal Expense Tracker",
+  description: "Track personal expenses, CSV imports, categories, and budgets.",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
+  return (
+    <html lang="en">
+      <body>
+        <AppShell>{children}</AppShell>
+      </body>
+    </html>
+  );
+}
