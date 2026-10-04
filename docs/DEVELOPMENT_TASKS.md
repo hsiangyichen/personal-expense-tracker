@@ -87,20 +87,20 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 5: CSV review and import
 
-- [ ] **T050 — Calculate a file fingerprint.** Hash the original file bytes before parsing.
-- [ ] **T051 — Handle repeated files.** Block an import whose fingerprint matches an earlier import and continue only after an explicit **Import again** decision.
-- [ ] **T052 — Detect possible duplicate rows.** Compare the six source fields and warn without automatically removing either row.
-- [ ] **T053 — Build the import summary.** Show included purchases, excluded payments, refund candidates, invalid rows, and duplicate warnings.
-- [ ] **T054 — Build the row review table.** Let the user inspect every row before saving.
-- [ ] **T055 — Add merchant correction.** Allow merchant edits while preserving `sourceDetails`.
-- [ ] **T056 — Add category assignment.** Require a category for included purchases and confirmed refunds.
-- [ ] **T057 — Add refund decisions.** Let the user choose **Count as refund** or **Exclude from spending** for every refund candidate; set counted refunds to a negative spending effect and warn when similar rows are both counted.
-- [ ] **T058 — Add duplicate decisions.** Let the user include or exclude each warned row manually.
-- [ ] **T059 — Resolve or block invalid rows.** Let the user explicitly exclude each invalid row or cancel the import and re-upload a corrected file; prevent saving while invalid rows or required decisions remain unresolved.
-- [ ] **T060 — Save imports atomically.** Create the import and all confirmed transactions in one database transaction.
-- [ ] **T061 — Show the import result.** Display saved, excluded-payment, refund, duplicate-warning, and invalid-row counts.
-- [ ] **T062 — Test import rollback.** Force a failed row and verify that no partial import or transactions remain.
-- [ ] **T063 — Add CSV browser tests.** Cover a successful import, both refund decisions, similar-refund warnings, duplicate decisions, repeated-file blocking and explicit approval, invalid-row exclusion, and correction before saving.
+- [x] **T050 — Calculate a file fingerprint.** Hash the original file bytes before parsing.
+- [x] **T051 — Handle repeated files.** Block an import whose fingerprint matches an earlier import and continue only after an explicit **Import again** decision.
+- [x] **T052 — Detect possible duplicate rows.** Compare the six source fields and warn without automatically removing either row.
+- [x] **T053 — Build the import summary.** Show included purchases, excluded payments, refund candidates, invalid rows, and duplicate warnings.
+- [x] **T054 — Build the row review table.** Let the user inspect every row before saving.
+- [x] **T055 — Add merchant correction.** Allow merchant edits while preserving `sourceDetails`.
+- [x] **T056 — Add category assignment.** Require a category for included purchases and confirmed refunds.
+- [x] **T057 — Add refund decisions.** Let the user choose **Count as refund** or **Exclude from spending** for every refund candidate; set counted refunds to a negative spending effect and warn when similar rows are both counted.
+- [x] **T058 — Add duplicate decisions.** Let the user include or exclude each warned row manually.
+- [x] **T059 — Resolve or block invalid rows.** Let the user explicitly exclude each invalid row or cancel the import and re-upload a corrected file; prevent saving while invalid rows or required decisions remain unresolved.
+- [x] **T060 — Save imports atomically.** Create the import and all confirmed transactions in one database transaction.
+- [x] **T061 — Show the import result.** Display saved, excluded-payment, refund, duplicate-warning, and invalid-row counts.
+- [x] **T062 — Test import rollback.** Force a failed row and verify that no partial import or transactions remain.
+- [x] **T063 — Add CSV browser tests.** Cover a successful import, both refund decisions, similar-refund warnings, duplicate decisions, repeated-file blocking and explicit approval, invalid-row exclusion, and correction before saving.
 
 **Milestone complete when:** A user can review and import the supported statement without counting payments or refund stages incorrectly.
 

@@ -5,6 +5,13 @@ import { defineConfig } from "vitest/config";
 
 const rootDirectory = path.dirname(fileURLToPath(import.meta.url));
 
+const testDataDirectory =
+  process.env.KIROCREW_SCRATCH ?? path.resolve(rootDirectory, "data");
+process.env.DATABASE_URL = `file:${path.join(
+  testDataDirectory,
+  "personal-expense-tracker-unit.db",
+)}`;
+
 export default defineConfig({
   plugins: [react()],
   resolve: {
@@ -14,6 +21,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    globalSetup: ["./vitest.global-setup.ts"],
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
