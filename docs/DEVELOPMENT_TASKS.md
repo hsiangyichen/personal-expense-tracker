@@ -71,17 +71,17 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 4: CSV parsing and validation
 
-- [ ] **T039 — Add a safe CSV fixture.** Create synthetic test data using the six supported headers and no real financial information.
-- [ ] **T040 — Validate CSV headers.** Accept required headers in any order and reject missing or unknown formats clearly.
-- [ ] **T041 — Parse CSV rows.** Read UTF-8 comma-separated rows without saving them.
-- [ ] **T042 — Validate CSV dates.** Accept only valid `YYYY-MM-DD` transaction and post dates.
-- [ ] **T043 — Validate CSV amounts.** Accept signed decimal amounts with no more than two decimal places and convert them to cents.
-- [ ] **T044 — Validate CSV currency.** Accept CAD and reject unsupported or mixed currencies.
-- [ ] **T045 — Validate and normalize purchases.** Require a positive source amount, set spending to that positive amount, and initialize merchant from `details`; treat a zero or negative purchase as invalid.
-- [ ] **T046 — Validate and normalize payments.** Require a negative source amount and preserve the payment with zero spending and no category; treat a zero or positive payment as invalid.
-- [ ] **T047 — Normalize refund candidates.** Accept either non-zero source sign, mark initiated and settled refund rows for review, and give them zero spending initially.
-- [ ] **T048 — Preserve source values.** Keep the original type, signed amount, dates, and `details` text unchanged.
-- [ ] **T049 — Test CSV parsing.** Cover reordered headers, quoted commas, blank lines, malformed rows, unsupported types, invalid dates, invalid amounts, mixed currencies, negative purchases, positive payments, and both refund source signs.
+- [x] **T039 — Add a safe CSV fixture.** Create synthetic test data using the six supported headers and no real financial information.
+- [x] **T040 — Validate CSV headers.** Accept required headers in any order and reject missing or unknown formats clearly.
+- [x] **T041 — Parse CSV rows.** Read UTF-8 comma-separated rows without saving them.
+- [x] **T042 — Validate CSV dates.** Accept only valid `YYYY-MM-DD` transaction and post dates.
+- [x] **T043 — Validate CSV amounts.** Accept signed decimal amounts with no more than two decimal places and convert them to cents.
+- [x] **T044 — Validate CSV currency.** Accept CAD and reject unsupported or mixed currencies.
+- [x] **T045 — Validate and normalize purchases.** Require a positive source amount, set spending to that positive amount, and initialize merchant from `details`; treat a zero or negative purchase as invalid.
+- [x] **T046 — Validate and normalize payments.** Require a negative source amount and preserve the payment with zero spending and no category; treat a zero or positive payment as invalid.
+- [x] **T047 — Normalize refund candidates.** Accept either non-zero source sign, mark initiated and settled refund rows for review, and give them zero spending initially.
+- [x] **T048 — Preserve source values.** Keep the original type, signed amount, dates, and `details` text unchanged.
+- [x] **T049 — Test CSV parsing.** Cover reordered headers, quoted commas, blank lines, malformed rows, unsupported types, invalid dates, invalid amounts, mixed currencies, negative purchases, positive payments, and both refund source signs.
 
 **Milestone complete when:** The supported CSV can be parsed into validated review rows without writing to the database.
 

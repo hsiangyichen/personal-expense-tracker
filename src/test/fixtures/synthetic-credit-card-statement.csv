@@ -1,0 +1,5 @@
+transaction_date,post_date,type,details,amount,currency
+2026-01-02,2026-01-03,Purchase,Synthetic Grocery Example,10.00,CAD
+2026-01-04,2026-01-05,Payment,Synthetic Payment Example,-25.00,CAD
+2026-01-06,2026-01-07,Refund initiated,Synthetic Refund Example,5.00,CAD
+2026-01-08,2026-01-09,Refund settled,Synthetic Refund Example,-5.00,CAD
