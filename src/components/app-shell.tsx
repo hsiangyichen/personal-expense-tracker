@@ -10,6 +10,7 @@ const navigation = [
   { href: "/expenses", label: "Expenses" },
   { href: "/import", label: "Import CSV" },
   { href: "/categories", label: "Categories & budgets" },
+  { href: "/data", label: "Data & backup" },
 ] as const;
 
 export function AppShell({ children }: Readonly<{ children: ReactNode }>) {

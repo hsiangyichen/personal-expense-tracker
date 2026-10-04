@@ -119,20 +119,20 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 7: Backup, restore, and release quality
 
-- [ ] **T072 — Choose the local data directory.** Resolve and document where the SQLite database and backups are stored.
-- [ ] **T073 — Create a safe backup service.** Use SQLite's backup operation to create a consistent timestamped database copy.
-- [ ] **T074 — Build the backup action.** Let the user create a backup and see its location and completion time.
-- [ ] **T075 — Create the standalone restore command.** Require the web application to be stopped, accept a selected backup path, and refuse to run when the active database is in use.
-- [ ] **T076 — Implement safe database replacement.** Validate the backup's SQLite format and schema, create a timestamped safety copy of the current database, and atomically replace it only after both checks succeed.
-- [ ] **T077 — Verify or roll back the restore.** Open the restored database, check transaction, category, budget, and import counts, and restore the safety copy if verification fails.
-- [ ] **T078 — Test backup and restore.** Cover successful restoration, malformed backups, incompatible schemas, interrupted replacement, failed count verification, and recovery from the safety copy.
-- [ ] **T079 — Add empty states.** Cover no expenses, no results, no budgets, and no imports.
-- [ ] **T080 — Add loading and error states.** Prevent duplicate submissions and show concise recovery actions.
-- [ ] **T081 — Check keyboard and screen-reader use.** Verify forms, dialogs, tables, validation messages, and progress information.
-- [ ] **T082 — Check responsive layouts.** Verify every core screen at desktop and mobile-sized browser widths.
-- [ ] **T083 — Run the complete test suite.** Run formatting, linting, type checking, unit tests, and browser tests.
+- [x] **T072 — Choose the local data directory.** Resolve and document where the SQLite database and backups are stored.
+- [x] **T073 — Create a safe backup service.** Use SQLite's backup operation to create a consistent timestamped database copy.
+- [x] **T074 — Build the backup action.** Let the user create a backup and see its location and completion time.
+- [x] **T075 — Create the standalone restore command.** Require the web application to be stopped, accept a selected backup path, and refuse to run when the active database is in use.
+- [x] **T076 — Implement safe database replacement.** Validate the backup's SQLite format and schema, create a timestamped safety copy of the current database, and atomically replace it only after both checks succeed.
+- [x] **T077 — Verify or roll back the restore.** Open the restored database, check transaction, category, budget, and import counts, and restore the safety copy if verification fails.
+- [x] **T078 — Test backup and restore.** Cover successful restoration, malformed backups, incompatible schemas, interrupted replacement, failed count verification, and recovery from the safety copy.
+- [x] **T079 — Add empty states.** Cover no expenses, no results, no budgets, and no imports.
+- [x] **T080 — Add loading and error states.** Prevent duplicate submissions and show concise recovery actions.
+- [x] **T081 — Check keyboard and screen-reader use.** Verify forms, dialogs, tables, validation messages, and progress information.
+- [x] **T082 — Check responsive layouts.** Verify every core screen at desktop and mobile-sized browser widths.
+- [x] **T083 — Run the complete test suite.** Run formatting, linting, type checking, unit tests, and browser tests.
 - [ ] **T084 — Complete a real-data rehearsal.** Use a local copy of the provided statement, verify totals manually, and keep the file and database out of Git.
-- [ ] **T085 — Write local setup instructions.** Document installation, startup, database location, backup, restore, and test commands.
+- [x] **T085 — Write local setup instructions.** Document installation, startup, database location, backup, restore, and test commands.
 
 **Milestone complete when:** The application passes the MVP success checks with no known data-loss or financial-total defects.
 
