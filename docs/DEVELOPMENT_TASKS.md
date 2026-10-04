@@ -106,14 +106,14 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 
 ## Milestone 6: Categories and budgets
 
-- [ ] **T064 — Build category creation.** Validate, normalize, and save a custom category name and color.
-- [ ] **T065 — Handle duplicate category names.** Show a concise message when capitalization or spacing matches an existing category.
-- [ ] **T066 — Build budget validation.** Validate category, positive integer cents, and `YYYY-MM` month keys; budget amounts use the application's CAD currency.
-- [ ] **T067 — Create a monthly budget.** Save one budget for a category and month.
-- [ ] **T068 — Edit a monthly budget.** Update the existing category-and-month budget instead of creating another row.
-- [ ] **T069 — Calculate budget progress.** Calculate used, remaining, percentage used, and exceeded state.
-- [ ] **T070 — Display budget progress.** Show a simple progress bar and exact amounts on the dashboard.
-- [ ] **T071 — Test budget behavior.** Cover no spending, refunds, exact limit, exceeded limit, and duplicate month attempts.
+- [x] **T064 — Build category creation.** Validate, normalize, and save a custom category name and color.
+- [x] **T065 — Handle duplicate category names.** Show a concise message when capitalization or spacing matches an existing category.
+- [x] **T066 — Build budget validation.** Validate category, positive integer cents, and `YYYY-MM` month keys; budget amounts use the application's CAD currency.
+- [x] **T067 — Create a monthly budget.** Save one budget for a category and month.
+- [x] **T068 — Edit a monthly budget.** Update the existing category-and-month budget instead of creating another row.
+- [x] **T069 — Calculate budget progress.** Calculate used, remaining, percentage used, and exceeded state.
+- [x] **T070 — Display budget progress.** Show a simple progress bar and exact amounts on the dashboard.
+- [x] **T071 — Test budget behavior.** Cover no spending, refunds, exact limit, exceeded limit, and duplicate month attempts.
 
 **Milestone complete when:** A user can create or update category budgets and see accurate monthly progress.
 

@@ -1,8 +1,13 @@
 import Link from "next/link";
+import {
+  budgetBarPercentage,
+  calculateBudgetProgress,
+} from "@/lib/budget-progress";
 import { Card, CardTitle } from "@/components/ui/card";
 import { calculateDashboard } from "@/lib/dashboard";
 import { currentMonthKey, isValidMonthKey } from "@/lib/expense-validation";
 import { formatCadFromCents } from "@/lib/money";
+import { listBudgetsForMonth } from "@/lib/repositories/budgets";
 import { listTransactionsForMonth } from "@/lib/repositories/transactions";
 
 type DashboardPageProps = {
@@ -18,13 +23,20 @@ export default async function DashboardPage({
     requestedMonth && isValidMonthKey(requestedMonth)
       ? requestedMonth
       : currentMonthKey();
-  const transactions = await listTransactionsForMonth(month);
+  const [transactions, budgets] = await Promise.all([
+    listTransactionsForMonth(month),
+    listBudgetsForMonth(month),
+  ]);
   const summary = calculateDashboard(transactions);
+  const budgetProgress = calculateBudgetProgress(
+    budgets,
+    summary.categoryTotals,
+  );
   const monthLabel = formatMonthLabel(month);
   const largestCategory = summarizeLargestCategory(summary.largestCategories);
 
   return (
-    <section aria-labelledby="dashboard-heading" className="space-y-6">
+    <section aria-labelledby="dashboard-heading" className="min-w-0 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-primary text-sm font-medium">Overview</p>
@@ -62,8 +74,8 @@ export default async function DashboardPage({
         </form>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card>
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="min-w-0">
           <CardTitle>Monthly spending</CardTitle>
           <p className="mt-3 text-3xl font-bold tabular-nums">
             {formatCadFromCents(summary.monthlyTotalMinor)}
@@ -72,14 +84,16 @@ export default async function DashboardPage({
             Net of confirmed refunds
           </p>
         </Card>
-        <Card>
+        <Card className="min-w-0">
           <CardTitle>Largest category</CardTitle>
-          <p className="mt-3 text-2xl font-bold">{largestCategory.value}</p>
+          <p className="mt-3 text-2xl font-bold break-words">
+            {largestCategory.value}
+          </p>
           <p className="text-muted-foreground mt-1 text-sm">
             {largestCategory.detail}
           </p>
         </Card>
-        <Card>
+        <Card className="min-w-0">
           <CardTitle>Recent expenses</CardTitle>
           <p className="mt-3 text-3xl font-bold tabular-nums">
             {summary.transactionCount}
@@ -92,8 +106,78 @@ export default async function DashboardPage({
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        <Card>
+      <Card className="min-w-0">
+        <div className="flex items-center justify-between gap-4">
+          <CardTitle>Budget progress</CardTitle>
+          <Link
+            className="text-primary text-sm font-medium hover:underline"
+            href={`/categories?month=${month}`}
+          >
+            Manage budgets
+          </Link>
+        </div>
+        {budgetProgress.length === 0 ? (
+          <EmptyState message="Set a monthly budget to track progress." />
+        ) : (
+          <ul className="mt-4 space-y-5">
+            {budgetProgress.map((progress) => {
+              const visualPercentage = budgetBarPercentage(progress);
+              const balanceLabel = progress.exceeded
+                ? `Over by ${formatCadFromCents(-progress.remainingMinor)}`
+                : `Remaining ${formatCadFromCents(progress.remainingMinor)}`;
+
+              return (
+                <li key={progress.categoryId}>
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+                    <span className="flex min-w-0 items-center gap-3 font-medium">
+                      <span
+                        aria-hidden="true"
+                        className="size-3 shrink-0 rounded-full"
+                        style={{ backgroundColor: progress.color }}
+                      />
+                      <span className="truncate">{progress.categoryName}</span>
+                    </span>
+                    <span
+                      className={`shrink-0 text-sm font-medium tabular-nums ${
+                        progress.exceeded ? "text-red-700" : ""
+                      }`}
+                    >
+                      {balanceLabel}
+                    </span>
+                  </div>
+                  <div
+                    aria-label={`${progress.categoryName} budget`}
+                    aria-valuemax={100}
+                    aria-valuemin={0}
+                    aria-valuenow={visualPercentage}
+                    aria-valuetext={`${formatCadFromCents(
+                      progress.usedMinor,
+                    )} used of ${formatCadFromCents(progress.budgetMinor)}`}
+                    className="bg-muted mt-2 h-3 overflow-hidden rounded-full"
+                    role="progressbar"
+                  >
+                    <div
+                      className={`h-full rounded-full ${
+                        progress.exceeded ? "bg-red-600" : "bg-primary"
+                      }`}
+                      style={{ width: `${visualPercentage}%` }}
+                    />
+                  </div>
+                  <div className="text-muted-foreground mt-2 flex flex-wrap justify-between gap-2 text-sm tabular-nums">
+                    <span>Used {formatCadFromCents(progress.usedMinor)}</span>
+                    <span>
+                      Limit {formatCadFromCents(progress.budgetMinor)}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
+
+      <div className="grid min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
+        <Card className="min-w-0">
           <CardTitle>Category breakdown</CardTitle>
           {summary.categoryTotals.length === 0 ? (
             <EmptyState message="Add an expense to see category totals." />
@@ -123,7 +207,7 @@ export default async function DashboardPage({
           )}
         </Card>
 
-        <Card>
+        <Card className="min-w-0">
           <div className="flex items-center justify-between gap-4">
             <CardTitle>Recent expenses</CardTitle>
             <Link
