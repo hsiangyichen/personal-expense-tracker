@@ -35,10 +35,12 @@ export default async function CategoriesPage({
     <section aria-labelledby="categories-heading" className="min-w-0">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-primary text-sm font-medium">Planning</p>
+          <p className="text-accent text-xs font-bold tracking-[0.16em] uppercase">
+            Planning
+          </p>
           <h1
             id="categories-heading"
-            className="mt-1 text-3xl font-bold tracking-tight"
+            className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
           >
             Categories &amp; budgets
           </h1>
@@ -49,15 +51,15 @@ export default async function CategoriesPage({
 
         <form
           action="/categories"
-          className="flex items-end gap-2"
+          className="bg-card grid w-full grid-cols-[minmax(0,1fr)_auto] items-end gap-2 rounded-xl border p-1.5 shadow-sm sm:w-fit"
           method="get"
         >
-          <div>
+          <div className="min-w-0">
             <label className="text-sm font-medium" htmlFor="budget-month">
               Budget month
             </label>
             <input
-              className="bg-card mt-1 min-h-11 rounded-md border px-3 py-2 text-sm"
+              className="bg-card focus:border-primary mt-1 min-h-11 w-full min-w-0 rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100"
               defaultValue={month}
               id="budget-month"
               name="month"
@@ -66,7 +68,7 @@ export default async function CategoriesPage({
             />
           </div>
           <button
-            className="bg-primary text-primary-foreground inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+            className="bg-primary text-primary-foreground inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm hover:bg-blue-700"
             type="submit"
           >
             View month
@@ -76,7 +78,7 @@ export default async function CategoriesPage({
 
       {statusMessage ? (
         <p
-          className="mt-5 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
+          className="mt-5 rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
           role="status"
         >
           {statusMessage}
@@ -84,7 +86,7 @@ export default async function CategoriesPage({
       ) : null}
 
       <div className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[minmax(18rem,1fr)_minmax(0,2fr)] lg:items-start">
-        <Card className="min-w-0">
+        <Card className="order-2 min-w-0 lg:order-1">
           <CardTitle>Create category</CardTitle>
           <p className="text-muted-foreground mt-1 text-sm">
             Add a category for expenses, imports, and budgets.
@@ -106,16 +108,19 @@ export default async function CategoriesPage({
           </ul>
         </Card>
 
-        <Card className="min-w-0">
+        <Card className="order-1 min-w-0 lg:order-2">
           <CardTitle>Budgets for {formatMonthLabel(month)}</CardTitle>
           <p className="text-muted-foreground mt-1 text-sm">
             Saving again updates the existing category budget for this month.
           </p>
-          <ul className="mt-4 divide-y">
+          <ul className="mt-5 grid min-w-0 gap-3">
             {categories.map((category) => {
               const budget = budgetsByCategory.get(category.id);
               return (
-                <li className="py-5 first:pt-0 last:pb-0" key={category.id}>
+                <li
+                  className="bg-background min-w-0 rounded-xl p-4"
+                  key={category.id}
+                >
                   <div className="flex min-w-0 items-center justify-between gap-4">
                     <span className="flex min-w-0 items-center gap-3 font-medium">
                       <span
@@ -123,7 +128,9 @@ export default async function CategoriesPage({
                         className="size-3 shrink-0 rounded-full"
                         style={{ backgroundColor: category.color }}
                       />
-                      <span className="truncate">{category.name}</span>
+                      <span className="min-w-0 break-words">
+                        {category.name}
+                      </span>
                     </span>
                     <span className="text-muted-foreground shrink-0 text-sm tabular-nums">
                       {budget

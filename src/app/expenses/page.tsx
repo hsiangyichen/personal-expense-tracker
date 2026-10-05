@@ -38,10 +38,12 @@ export default async function ExpensesPage({
 
   return (
     <section aria-labelledby="expenses-heading">
-      <p className="text-primary text-sm font-medium">Transactions</p>
+      <p className="text-accent text-xs font-bold tracking-[0.16em] uppercase">
+        Transactions
+      </p>
       <h1
         id="expenses-heading"
-        className="mt-1 text-3xl font-bold tracking-tight"
+        className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
       >
         Expenses
       </h1>
@@ -51,7 +53,7 @@ export default async function ExpensesPage({
 
       {statusMessage ? (
         <p
-          className="mt-5 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
+          className="mt-5 rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-900"
           role="status"
         >
           {statusMessage}
@@ -60,7 +62,7 @@ export default async function ExpensesPage({
 
       {editId && !editedExpense ? (
         <p
-          className="mt-5 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
+          className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900"
           role="alert"
         >
           This manual expense is no longer available.
@@ -72,7 +74,7 @@ export default async function ExpensesPage({
           <CardTitle>Expense list</CardTitle>
           <form
             action="/expenses"
-            className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+            className="bg-background mt-4 grid gap-4 rounded-xl p-4 sm:grid-cols-2 xl:grid-cols-4"
             method="get"
           >
             <div>
@@ -80,7 +82,7 @@ export default async function ExpensesPage({
                 Month
               </label>
               <input
-                className="bg-card mt-1 min-h-11 w-full rounded-md border px-3 py-2 text-sm"
+                className="bg-card focus:border-primary mt-1 min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100"
                 defaultValue={month}
                 id="month"
                 name="month"
@@ -93,7 +95,7 @@ export default async function ExpensesPage({
                 Category
               </label>
               <select
-                className="bg-card mt-1 min-h-11 w-full rounded-md border px-3 py-2 text-sm"
+                className="bg-card focus:border-primary mt-1 min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100"
                 defaultValue={categoryId ?? ""}
                 id="category"
                 name="category"
@@ -111,7 +113,7 @@ export default async function ExpensesPage({
                 Merchant or details
               </label>
               <input
-                className="bg-card mt-1 min-h-11 w-full rounded-md border px-3 py-2 text-sm"
+                className="bg-card focus:border-primary mt-1 min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100"
                 defaultValue={search}
                 id="search"
                 maxLength={100}
@@ -122,13 +124,13 @@ export default async function ExpensesPage({
             </div>
             <div className="flex items-end gap-2">
               <button
-                className="bg-primary text-primary-foreground inline-flex min-h-11 flex-1 items-center justify-center rounded-md px-4 py-2 text-sm font-medium hover:opacity-90"
+                className="bg-primary text-primary-foreground inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm hover:bg-blue-700"
                 type="submit"
               >
                 Apply filters
               </button>
               <Link
-                className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-md border px-3 py-2 text-sm font-medium"
+                className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-xl border px-3 py-2 text-sm font-medium"
                 href={`/expenses?month=${month}`}
               >
                 Clear
@@ -143,89 +145,103 @@ export default async function ExpensesPage({
           </p>
 
           {expenses.length === 0 ? (
-            <div className="mt-4 rounded-lg border border-dashed p-8 text-center">
+            <div className="bg-background mt-4 rounded-xl p-8 text-center">
               <p className="font-medium">No expenses found</p>
               <p className="text-muted-foreground mt-1 text-sm">
                 Add an expense or change the filters.
               </p>
             </div>
           ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[46rem] border-collapse text-left text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-3 py-3 font-medium" scope="col">
-                      Date
-                    </th>
-                    <th className="px-3 py-3 font-medium" scope="col">
-                      Merchant
-                    </th>
-                    <th className="px-3 py-3 font-medium" scope="col">
-                      Category
-                    </th>
-                    <th
-                      className="px-3 py-3 text-right font-medium"
-                      scope="col"
-                    >
-                      Amount
-                    </th>
-                    <th className="px-3 py-3 font-medium" scope="col">
-                      Source
-                    </th>
-                    <th
-                      className="px-3 py-3 text-right font-medium"
-                      scope="col"
-                    >
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {expenses.map((expense) => (
-                    <tr className="border-b last:border-0" key={expense.id}>
-                      <td className="px-3 py-4 whitespace-nowrap">
-                        {expense.transactionDate}
-                      </td>
-                      <td className="px-3 py-4 font-medium">
-                        {expense.merchant}
-                      </td>
-                      <td className="px-3 py-4">
-                        {expense.category?.name ?? "Uncategorized"}
-                      </td>
-                      <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums">
-                        {formatCadFromCents(expense.spendingAmountMinor)}
-                      </td>
-                      <td className="px-3 py-4 capitalize">{expense.source}</td>
-                      <td className="px-3 py-4 text-right">
-                        {expense.source === "manual" ? (
-                          <div className="flex justify-end gap-2">
-                            <Link
-                              aria-label={`Edit ${expense.merchant}`}
-                              className="bg-card hover:bg-muted inline-flex min-h-9 items-center justify-center rounded-md border px-3 py-1 text-sm font-medium"
-                              href={buildExpensesHref({
-                                month,
-                                categoryId,
-                                search,
-                                edit: expense.id,
-                              })}
-                            >
-                              Edit
-                            </Link>
-                            <DeleteExpenseButton
-                              expenseId={expense.id}
-                              merchant={expense.merchant}
-                              month={month}
-                            />
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
+            <>
+              <MobileExpenseList
+                categoryId={categoryId}
+                expenses={expenses}
+                month={month}
+                search={search}
+              />
+              <div className="mt-4 hidden overflow-x-auto md:block">
+                <table className="w-full min-w-[42rem] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="text-muted-foreground text-xs tracking-[0.08em] uppercase">
+                      <th className="px-3 py-3 font-bold" scope="col">
+                        Date
+                      </th>
+                      <th className="px-3 py-3 font-bold" scope="col">
+                        Merchant
+                      </th>
+                      <th className="px-3 py-3 font-bold" scope="col">
+                        Category
+                      </th>
+                      <th
+                        className="px-3 py-3 text-right font-bold"
+                        scope="col"
+                      >
+                        Amount
+                      </th>
+                      <th className="px-3 py-3 font-bold" scope="col">
+                        Added from
+                      </th>
+                      <th
+                        className="px-3 py-3 text-right font-bold"
+                        scope="col"
+                      >
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {expenses.map((expense) => (
+                      <tr
+                        className="border-t border-slate-100"
+                        data-expense-entry
+                        key={expense.id}
+                      >
+                        <td className="px-3 py-4 whitespace-nowrap">
+                          {formatDisplayDate(expense.transactionDate)}
+                        </td>
+                        <td className="px-3 py-4 font-medium">
+                          {expense.merchant}
+                        </td>
+                        <td className="px-3 py-4">
+                          {expense.category?.name ?? "Uncategorized"}
+                        </td>
+                        <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums">
+                          {formatCadFromCents(expense.spendingAmountMinor)}
+                        </td>
+                        <td className="px-3 py-4">
+                          {sourceLabel(expense.source)}
+                        </td>
+                        <td className="px-3 py-4 text-right">
+                          {expense.source === "manual" ? (
+                            <div className="flex justify-end gap-2">
+                              <Link
+                                aria-label={`Edit ${expense.merchant}`}
+                                className="bg-card hover:bg-muted inline-flex min-h-9 items-center justify-center rounded-xl border px-3 py-1 text-sm font-medium"
+                                href={buildExpensesHref({
+                                  month,
+                                  categoryId,
+                                  search,
+                                  edit: expense.id,
+                                })}
+                              >
+                                Edit
+                              </Link>
+                              <DeleteExpenseButton
+                                expenseId={expense.id}
+                                merchant={expense.merchant}
+                                month={month}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </Card>
 
@@ -248,6 +264,92 @@ export default async function ExpensesPage({
       </div>
     </section>
   );
+}
+
+function MobileExpenseList({
+  categoryId,
+  expenses,
+  month,
+  search,
+}: Readonly<{
+  categoryId?: string;
+  expenses: Awaited<ReturnType<typeof listExpenses>>;
+  month: string;
+  search?: string;
+}>) {
+  return (
+    <ul className="mt-4 grid gap-3 md:hidden">
+      {expenses.map((expense) => (
+        <li
+          className="bg-background min-w-0 rounded-xl p-4"
+          data-expense-entry
+          key={expense.id}
+        >
+          <div className="flex min-w-0 items-start justify-between gap-3">
+            <span className="min-w-0 font-semibold break-words">
+              {expense.merchant}
+            </span>
+            <span className="shrink-0 font-bold tabular-nums">
+              {formatCadFromCents(expense.spendingAmountMinor)}
+            </span>
+          </div>
+          <dl className="text-muted-foreground mt-3 grid gap-2 text-sm">
+            <div className="flex justify-between gap-3">
+              <dt>Date</dt>
+              <dd className="text-foreground text-right">
+                {formatDisplayDate(expense.transactionDate)}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt>Category</dt>
+              <dd className="text-foreground min-w-0 text-right break-words">
+                {expense.category?.name ?? "Uncategorized"}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt>Added from</dt>
+              <dd className="text-foreground text-right">
+                {sourceLabel(expense.source)}
+              </dd>
+            </div>
+          </dl>
+          {expense.source === "manual" ? (
+            <div className="mt-4 flex justify-end gap-2 border-t border-slate-200 pt-3">
+              <Link
+                aria-label={`Edit ${expense.merchant}`}
+                className="bg-card hover:bg-muted inline-flex min-h-10 items-center justify-center rounded-xl border px-4 py-2 text-sm font-semibold"
+                href={buildExpensesHref({
+                  month,
+                  categoryId,
+                  search,
+                  edit: expense.id,
+                })}
+              >
+                Edit
+              </Link>
+              <DeleteExpenseButton
+                expenseId={expense.id}
+                merchant={expense.merchant}
+                month={month}
+              />
+            </div>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function sourceLabel(source: string) {
+  return source === "manual" ? "Added by you" : "Imported CSV";
+}
+
+function formatDisplayDate(dateOnly: string) {
+  const [year, month, day] = dateOnly.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-CA", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
 function singleValue(value: string | string[] | undefined) {
