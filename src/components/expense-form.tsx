@@ -12,7 +12,7 @@ import { CURRENCY } from "@/lib/constants";
 
 const INITIAL_STATE: ExpenseActionState = {};
 const fieldClassName =
-  "bg-card mt-1 min-h-11 w-full rounded-md border px-3 py-2 text-sm";
+  "bg-card mt-1 min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-blue-100";
 
 type CategoryOption = {
   id: string;
@@ -70,7 +70,7 @@ export function ExpenseForm({
 
       {state.message ? (
         <p
-          className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+          className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-900"
           role="alert"
         >
           {state.message}
@@ -162,7 +162,7 @@ export function ExpenseForm({
         />
         {isEditing ? (
           <Link
-            className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
+            className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium"
             href={cancelHref}
           >
             Cancel

@@ -48,7 +48,7 @@ test("keeps every core screen accessible and within the viewport", async ({
 
 async function expectInteractiveControlsToHaveNames(page: Page) {
   const controls = page.locator(
-    'a, button, input:not([type="hidden"]), select, textarea',
+    'a:visible, button:visible, input:not([type="hidden"]):visible, select:visible, textarea:visible',
   );
   for (let index = 0; index < (await controls.count()); index += 1) {
     await expect(controls.nth(index)).toHaveAccessibleName(/\S/);

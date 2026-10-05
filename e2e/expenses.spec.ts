@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { randomUUID } from "node:crypto";
 import { PrismaClient } from "@prisma/client";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 const prisma = new PrismaClient();
 
@@ -35,30 +35,22 @@ test("manages a manual expense from creation through deletion", async ({
     await expect(
       page.getByRole("status").filter({ hasText: "Expense added." }),
     ).toBeVisible();
-    const createdRow = page
-      .getByRole("row")
-      .filter({ hasText: originalMerchant });
-    await expect(createdRow).toBeVisible();
+    const createdEntry = visibleExpenseEntry(page, originalMerchant);
+    await expect(createdEntry).toBeVisible();
     await expect(
-      createdRow.getByText("$12.34 CAD", { exact: true }),
+      createdEntry.getByText("$12.34 CAD", { exact: true }),
     ).toBeVisible();
 
     await page.reload();
-    await expect(
-      page.getByText(originalMerchant, { exact: true }),
-    ).toBeVisible();
+    await expect(visibleExpenseEntry(page, originalMerchant)).toBeVisible();
 
     await page.getByLabel("Merchant or details").fill(marker);
     await page.getByRole("button", { name: "Apply filters" }).click();
-    await expect(
-      page.getByText(originalMerchant, { exact: true }),
-    ).toBeVisible();
+    await expect(visibleExpenseEntry(page, originalMerchant)).toBeVisible();
 
     await page.locator("#category").selectOption({ label: "Dining" });
     await page.getByRole("button", { name: "Apply filters" }).click();
-    await expect(page.getByText(originalMerchant, { exact: true })).toHaveCount(
-      0,
-    );
+    await expect(visibleExpenseEntry(page, originalMerchant)).toHaveCount(0);
 
     await page.locator("#category").selectOption({ label: "Groceries" });
     await page.getByRole("button", { name: "Apply filters" }).click();
@@ -82,24 +74,18 @@ test("manages a manual expense from creation through deletion", async ({
     await expect(
       page.getByRole("status").filter({ hasText: "Expense updated." }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("row").filter({ hasText: updatedMerchant }),
-    ).toBeVisible();
+    await expect(visibleExpenseEntry(page, updatedMerchant)).toBeVisible();
 
     await page.locator("#category").selectOption({ label: "Dining" });
     await page.getByRole("button", { name: "Apply filters" }).click();
-    await expect(
-      page.getByRole("row").filter({ hasText: updatedMerchant }),
-    ).toBeVisible();
+    await expect(visibleExpenseEntry(page, updatedMerchant)).toBeVisible();
 
     await page.getByLabel("Merchant or details").fill(marker);
     await page.getByRole("button", { name: "Apply filters" }).click();
-    const updatedRow = page
-      .getByRole("row")
-      .filter({ hasText: updatedMerchant });
-    await expect(updatedRow).toBeVisible();
+    const updatedEntry = visibleExpenseEntry(page, updatedMerchant);
+    await expect(updatedEntry).toBeVisible();
     await expect(
-      updatedRow.getByText("$56.78 CAD", { exact: true }),
+      updatedEntry.getByText("$56.78 CAD", { exact: true }),
     ).toBeVisible();
 
     page.once("dialog", (dialog) => dialog.accept());
@@ -110,12 +96,16 @@ test("manages a manual expense from creation through deletion", async ({
     await expect(
       page.getByRole("status").filter({ hasText: "Expense deleted." }),
     ).toBeVisible();
-    await expect(
-      page.getByRole("row").filter({ hasText: updatedMerchant }),
-    ).toHaveCount(0);
+    await expect(visibleExpenseEntry(page, updatedMerchant)).toHaveCount(0);
   } finally {
     await prisma.transaction.deleteMany({
       where: { merchant: { contains: marker } },
     });
   }
 });
+
+function visibleExpenseEntry(page: Page, merchant: string) {
+  return page
+    .locator("[data-expense-entry]:visible")
+    .filter({ hasText: merchant });
+}

@@ -15,7 +15,7 @@ import type { ImportRowDecision } from "@/lib/import-workflow";
 import { formatCadFromCents } from "@/lib/money";
 
 const fieldClassName =
-  "bg-card min-h-11 w-full rounded-md border px-3 py-2 text-sm";
+  "bg-card min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-blue-100";
 
 type CategoryOption = {
   id: string;
@@ -88,6 +88,11 @@ export function ImportReview({ categories }: ImportReviewProps) {
           The file stays on this computer. Nothing is saved until you finish
           reviewing every row.
         </p>
+        <p className="bg-background text-muted-foreground mt-4 rounded-xl p-3 text-sm leading-relaxed">
+          Use a CSV with these columns: transaction_date, post_date, type,
+          details, amount, and currency. Dates must use YYYY-MM-DD and currency
+          must be CAD.
+        </p>
         <form
           className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
           onSubmit={(event) => {
@@ -125,7 +130,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
             </label>
             <input
               accept=".csv,text/csv"
-              className={`${fieldClassName} file:mr-3 file:rounded file:border-0 file:bg-transparent file:font-medium`}
+              className={`${fieldClassName} file:bg-muted file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:font-semibold`}
               id="csv-file"
               name="file"
               disabled={pending}
@@ -153,7 +158,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
       {message ? (
         <p
-          className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+          className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-900"
           role="alert"
         >
           {message}
@@ -166,7 +171,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
           {preview.alreadyImported ? (
             <div
-              className="rounded-md border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
+              className="rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
               role="alert"
             >
               <p className="font-semibold">This file was already imported.</p>
@@ -184,7 +189,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
           {countedSimilarRefunds.length > 0 ? (
             <div
-              className="rounded-md border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
+              className="rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
               role="alert"
             >
               <p className="font-semibold">Similar refunds are both counted.</p>
@@ -310,7 +315,7 @@ function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {items.map((item) => (
-          <Card key={item.label}>
+          <Card className="rounded-xl" key={item.label}>
             <p className="text-muted-foreground text-sm">{item.label}</p>
             <p className="mt-1 text-2xl font-bold">{item.value}</p>
           </Card>
@@ -596,13 +601,15 @@ function ImportResult({
 
   return (
     <section aria-labelledby="result-heading" className="mt-6">
-      <p className="text-primary text-sm font-medium">Import complete</p>
+      <p className="text-accent text-xs font-bold tracking-[0.16em] uppercase">
+        Import complete
+      </p>
       <h2 className="mt-1 text-2xl font-bold" id="result-heading">
         Statement saved
       </h2>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {items.map((item) => (
-          <Card key={item.label}>
+          <Card className="rounded-xl" key={item.label}>
             <p className="text-muted-foreground text-sm">{item.label}</p>
             <p className="mt-1 text-2xl font-bold">{item.value}</p>
           </Card>
@@ -616,7 +623,7 @@ function ImportResult({
       <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={onReset}>Review another CSV</Button>
         <Link
-          className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
+          className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium"
           href="/expenses"
         >
           View expenses

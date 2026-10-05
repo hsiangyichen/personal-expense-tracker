@@ -28,7 +28,7 @@ export function BackupButton() {
 
       {result?.success ? (
         <div
-          className="mt-4 rounded-md border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950"
+          className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-950"
           role="status"
         >
           <p className="font-medium">Backup created.</p>
@@ -46,7 +46,7 @@ export function BackupButton() {
 
       {result && !result.success ? (
         <p
-          className="mt-4 rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+          className="mt-4 rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-900"
           role="alert"
         >
           {result.message}
