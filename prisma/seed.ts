@@ -19,6 +19,32 @@ const defaultCategories = [
     color: "#4338ca",
   },
   { name: "Health", normalizedName: "health", color: "#0f766e" },
+  { name: "Clothing", normalizedName: "clothing", color: "#db2777" },
+  {
+    name: "Subscriptions",
+    normalizedName: "subscriptions",
+    color: "#7c3aed",
+  },
+  { name: "Internet", normalizedName: "internet", color: "#0284c7" },
+  { name: "Phone", normalizedName: "phone", color: "#2563eb" },
+  { name: "Travel", normalizedName: "travel", color: "#0891b2" },
+  {
+    name: "Personal Care",
+    normalizedName: "personal care",
+    color: "#e11d48",
+  },
+  { name: "Household", normalizedName: "household", color: "#65a30d" },
+  { name: "Education", normalizedName: "education", color: "#ca8a04" },
+  {
+    name: "Car Insurance",
+    normalizedName: "car insurance",
+    color: "#4f46e5",
+  },
+  {
+    name: "Medical Aesthetics",
+    normalizedName: "medical aesthetics",
+    color: "#be123c",
+  },
   { name: "Other", normalizedName: "other", color: "#475569" },
 ] as const;
 

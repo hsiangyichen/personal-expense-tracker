@@ -10,7 +10,7 @@ test.afterAll(async () => {
   await prisma.$disconnect();
 });
 
-test("reviews decisions and imports a synthetic statement", async ({
+test("reviews rows and imports a synthetic statement", async ({
   page,
 }, testInfo) => {
   const marker = `${testInfo.project.name}-${randomUUID()}`;
@@ -92,22 +92,18 @@ test("reviews decisions and imports a synthetic statement", async ({
     await visibleControl(page, "Category for row 2").selectOption({
       label: "Groceries",
     });
-    await visibleControl(page, "Possible duplicate")
-      .nth(0)
-      .selectOption("include");
 
-    await visibleControl(page, "Category for row 3").selectOption({
-      label: "Dining",
-    });
-    await visibleControl(page, "Possible duplicate")
-      .nth(1)
-      .selectOption("exclude");
+    await visibleControl(page, "Delete row 3").click();
+    await expect(
+      page.getByText("Will not import").filter({ visible: true }),
+    ).toBeVisible();
+    await visibleControl(page, "Restore row 3").click();
+    await expect(visibleControl(page, "Category for row 3")).toBeEnabled();
+    await visibleControl(page, "Delete row 3").click();
 
-    await visibleControl(page, "Refund", true).nth(0).selectOption("count");
     await visibleControl(page, "Category for row 5").selectOption({
       label: "Groceries",
     });
-    await visibleControl(page, "Refund", true).nth(1).selectOption("count");
     await visibleControl(page, "Category for row 6").selectOption({
       label: "Groceries",
     });
@@ -116,12 +112,12 @@ test("reviews decisions and imports a synthetic statement", async ({
       page.getByText("Similar refunds are both counted."),
     ).toBeVisible();
 
-    await visibleControl(page, "Refund", true).nth(1).selectOption("exclude");
+    await visibleControl(page, "Delete row 6").click();
     await expect(
       page.getByText("Similar refunds are both counted."),
     ).toHaveCount(0);
 
-    await visibleControl(page, "Exclude invalid row 7").check();
+    await visibleControl(page, "Delete row 7").click();
     await expect(
       page.getByText("All required decisions are complete."),
     ).toBeVisible();
@@ -131,14 +127,14 @@ test("reviews decisions and imports a synthetic statement", async ({
     await expect(
       page.getByRole("heading", { name: "Statement saved" }),
     ).toBeVisible();
-    await expect(resultCard(page, "Saved rows")).toContainText("4");
+    await expect(resultCard(page, "Saved rows")).toContainText("3");
     await expect(resultCard(page, "Excluded payments")).toContainText("1");
-    await expect(resultCard(page, "Refund rows")).toContainText("2");
+    await expect(resultCard(page, "Refund rows")).toContainText("1");
     await expect(resultCard(page, "Duplicate warnings")).toContainText("1");
-    await expect(resultCard(page, "Invalid rows excluded")).toContainText("1");
+    await expect(resultCard(page, "Invalid rows deleted")).toContainText("1");
     await expect(
       page.getByText(
-        "1 refunds counted, 1 excluded from spending, and 1 duplicate-warning rows excluded.",
+        "1 refunds counted, 1 refunds deleted, and 1 duplicate-warning rows deleted.",
       ),
     ).toBeVisible();
 
@@ -146,7 +142,7 @@ test("reviews decisions and imports a synthetic statement", async ({
       where: { import: { fileFingerprint: fingerprint } },
       orderBy: { transactionDate: "asc" },
     });
-    expect(savedRows).toHaveLength(4);
+    expect(savedRows).toHaveLength(3);
     expect(savedRows[0]).toMatchObject({
       merchant: correctedMerchant,
       sourceDetails: duplicateDetails,
@@ -161,11 +157,6 @@ test("reviews decisions and imports a synthetic statement", async ({
       expect.objectContaining({
         spendingAmountMinor: -500,
         reviewStatus: "included",
-      }),
-      expect.objectContaining({
-        spendingAmountMinor: 0,
-        reviewStatus: "excluded",
-        categoryId: null,
       }),
     ]);
   } finally {

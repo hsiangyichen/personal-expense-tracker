@@ -33,7 +33,7 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 - [x] **T013 — Create the Budget model.** Add category, `monthKey`, amount, and a unique category-and-month constraint.
 - [x] **T014 — Add database relationships.** Connect transactions to categories and imports, and budgets to categories.
 - [x] **T015 — Create the first migration.** Generate and apply the initial SQLite migration.
-- [x] **T016 — Seed default categories.** Add groceries, dining, transportation, housing, shopping, entertainment, health, and other.
+- [x] **T016 — Seed default categories.** Add groceries, dining, transportation, housing, shopping, entertainment, health, clothing, subscriptions, internet, phone, travel, personal care, household, education, car insurance, medical aesthetics, and other.
 - [x] **T017 — Add the data-access boundary.** Create repository functions so pages do not call Prisma directly.
 - [x] **T018 — Test database constraints.** Verify category uniqueness, budget uniqueness, and required category rules.
 
@@ -93,14 +93,14 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 - [x] **T053 — Build the import summary.** Show included purchases, excluded payments, refund candidates, invalid rows, and duplicate warnings.
 - [x] **T054 — Build the row review table.** Let the user inspect every row before saving.
 - [x] **T055 — Add merchant correction.** Allow merchant edits while preserving `sourceDetails`.
-- [x] **T056 — Add category assignment.** Require a category for included purchases and confirmed refunds.
-- [x] **T057 — Add refund decisions.** Let the user choose **Count as refund** or **Exclude from spending** for every refund candidate; set counted refunds to a negative spending effect and warn when similar rows are both counted.
-- [x] **T058 — Add duplicate decisions.** Let the user include or exclude each warned row manually.
-- [x] **T059 — Resolve or block invalid rows.** Let the user explicitly exclude each invalid row or cancel the import and re-upload a corrected file; prevent saving while invalid rows or required decisions remain unresolved.
+- [x] **T056 — Add category assignment.** Require a category for kept purchases and refunds.
+- [x] **T057 — Handle refunds.** Count kept refunds as a negative spending effect, allow deletion when a refund should not be imported, and warn when similar rows are both kept.
+- [x] **T058 — Handle possible duplicates.** Keep warned rows by default and let the user delete any row that should not be imported.
+- [x] **T059 — Resolve or block invalid rows.** Require every invalid row to be deleted, or let the user cancel the import and re-upload a corrected file; prevent saving while invalid rows or required categories remain unresolved.
 - [x] **T060 — Save imports atomically.** Create the import and all confirmed transactions in one database transaction.
-- [x] **T061 — Show the import result.** Display saved, excluded-payment, refund, duplicate-warning, and invalid-row counts.
+- [x] **T061 — Show the import result.** Display saved, excluded-payment, refund, duplicate-warning, and deleted invalid-row counts.
 - [x] **T062 — Test import rollback.** Force a failed row and verify that no partial import or transactions remain.
-- [x] **T063 — Add CSV browser tests.** Cover a successful import, both refund decisions, similar-refund warnings, duplicate decisions, repeated-file blocking and explicit approval, invalid-row exclusion, and correction before saving.
+- [x] **T063 — Add CSV browser tests.** Cover a successful import, refund handling, similar-refund warnings, duplicate deletion, repeated-file blocking and explicit approval, invalid-row deletion, restoration, and correction before saving.
 
 **Milestone complete when:** A user can review and import the supported statement without counting payments or refund stages incorrectly.
 
