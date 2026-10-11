@@ -3,12 +3,14 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm transition-colors disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground hover:opacity-90",
-        secondary: "border bg-card text-card-foreground hover:bg-muted",
+        primary:
+          "bg-primary text-primary-foreground hover:bg-blue-700 focus-visible:bg-blue-700",
+        secondary:
+          "border bg-card text-card-foreground hover:bg-muted focus-visible:bg-muted",
       },
     },
     defaultVariants: {

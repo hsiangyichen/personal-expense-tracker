@@ -1,4 +1,9 @@
 import { z } from "zod";
+import {
+  InvalidCategoryRuleError,
+  prepareCategoryRuleInput,
+  type PreparedCategoryRuleInput,
+} from "@/lib/category-rule-validation";
 import type { CsvReviewRow } from "@/lib/csv-parser";
 import type { DuplicateRowGroup } from "@/lib/import-review";
 import type { ImportTransactionInput } from "@/lib/repositories/imports";
@@ -10,6 +15,7 @@ const decisionSchema = z.object({
   duplicateDecision: z.enum(["include", "exclude"]).optional(),
   refundDecision: z.enum(["count", "exclude"]).optional(),
   invalidDecision: z.literal("exclude").optional(),
+  rememberCategoryRule: z.boolean().optional(),
 });
 
 export type ImportRowDecision = z.infer<typeof decisionSchema>;
@@ -20,6 +26,7 @@ export type ImportResolution = {
   excludedRefundCount: number;
   duplicateExcludedCount: number;
   invalidExcludedCount: number;
+  categoryRules: PreparedCategoryRuleInput[];
 };
 
 export class ImportResolutionError extends Error {
@@ -53,6 +60,7 @@ export function resolveImportRows(
 ): ImportResolution {
   const rowNumbers = new Set(rows.map((row) => row.rowNumber));
   const decisionsByRow = new Map<number, ImportRowDecision>();
+  const categoryRulesByPattern = new Map<string, PreparedCategoryRuleInput>();
 
   for (const decision of decisions) {
     if (
@@ -75,6 +83,7 @@ export function resolveImportRows(
     excludedRefundCount: 0,
     duplicateExcludedCount: 0,
     invalidExcludedCount: 0,
+    categoryRules: [],
   };
 
   for (const row of rows) {
@@ -124,6 +133,13 @@ export function resolveImportRows(
         reviewStatus: "included",
         categoryId: decision.categoryId,
       });
+      collectRememberedRule({
+        decision,
+        merchant,
+        categoryId: decision.categoryId,
+        categoryRulesByPattern,
+        rowNumber: row.rowNumber,
+      });
       continue;
     }
 
@@ -155,6 +171,13 @@ export function resolveImportRows(
         reviewStatus: "included",
         categoryId: decision.categoryId,
       });
+      collectRememberedRule({
+        decision,
+        merchant,
+        categoryId: decision.categoryId,
+        categoryRulesByPattern,
+        rowNumber: row.rowNumber,
+      });
       resolution.countedRefundCount += 1;
     } else {
       resolution.transactions.push({
@@ -167,7 +190,52 @@ export function resolveImportRows(
     }
   }
 
+  resolution.categoryRules = [...categoryRulesByPattern.values()];
   return resolution;
+}
+
+function collectRememberedRule({
+  categoryId,
+  categoryRulesByPattern,
+  decision,
+  merchant,
+  rowNumber,
+}: {
+  categoryId: string;
+  categoryRulesByPattern: Map<string, PreparedCategoryRuleInput>;
+  decision: ImportRowDecision;
+  merchant: string;
+  rowNumber: number;
+}) {
+  if (!decision.rememberCategoryRule) {
+    return;
+  }
+
+  let prepared: PreparedCategoryRuleInput;
+  try {
+    prepared = prepareCategoryRuleInput({
+      matchType: "exact",
+      pattern: merchant,
+      categoryId,
+    });
+  } catch (error) {
+    if (error instanceof InvalidCategoryRuleError) {
+      throw new ImportResolutionError(
+        `Row ${rowNumber} needs a merchant with letters or numbers to save a rule.`,
+      );
+    }
+    throw error;
+  }
+
+  const existing = categoryRulesByPattern.get(prepared.normalizedPattern);
+  if (existing && existing.categoryId !== prepared.categoryId) {
+    throw new ImportResolutionError(
+      "The same merchant cannot be remembered with different categories.",
+    );
+  }
+  if (!existing) {
+    categoryRulesByPattern.set(prepared.normalizedPattern, prepared);
+  }
 }
 
 function sourceTransaction(

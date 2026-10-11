@@ -87,9 +87,16 @@ test("matches dashboard totals to the selected month's expense list", async ({
     await expect(categoryBreakdown.getByText("$5.66 CAD")).toBeVisible();
 
     await page.goto(`/expenses?month=2026-06&search=${marker}`);
-    await expect(page.getByText("2 expenses")).toBeVisible();
-    await expect(page.getByText("$12.34 CAD")).toBeVisible();
-    await expect(page.getByText("$5.66 CAD")).toBeVisible();
+    const visibleExpenses = page
+      .locator("[data-expense-entry]:visible")
+      .filter({ hasText: marker });
+    await expect(visibleExpenses).toHaveCount(2);
+    await expect(
+      visibleExpenses.getByText("$12.34 CAD", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      visibleExpenses.getByText("$5.66 CAD", { exact: true }),
+    ).toBeVisible();
 
     await page.goto("/?month=2026-06");
     await page.getByLabel("Month", { exact: true }).fill("2026-07");

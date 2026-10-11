@@ -28,7 +28,7 @@ export function BudgetForm({
 
   return (
     <form
-      className="mt-3"
+      className="mt-3 min-w-0"
       noValidate
       onSubmit={(event) => {
         event.preventDefault();
@@ -61,7 +61,7 @@ export function BudgetForm({
       <label className="text-sm font-medium" htmlFor={inputId}>
         Monthly budget (CAD)
       </label>
-      <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+      <div className="mt-1 flex w-full min-w-0 flex-col gap-2 sm:flex-row">
         <div className="min-w-0 flex-1">
           <input
             aria-describedby={
@@ -69,7 +69,7 @@ export function BudgetForm({
             }
             aria-invalid={Boolean(state.fieldErrors?.amount?.length)}
             aria-label={`Budget for ${categoryName}`}
-            className="bg-card min-h-11 w-full rounded-md border px-3 py-2 text-sm"
+            className="bg-card focus:border-primary min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:ring-2 focus:ring-blue-100"
             defaultValue={
               amountMinor === undefined ? "" : centsToInputValue(amountMinor)
             }

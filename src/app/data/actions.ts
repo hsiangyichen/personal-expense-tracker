@@ -18,7 +18,8 @@ export async function createBackupAction(): Promise<BackupActionResult> {
   } catch {
     return {
       success: false,
-      message: "Could not create the backup. Check the data directory and try again.",
+      message:
+        "Could not create the backup. Check the data directory and try again.",
     };
   }
 }

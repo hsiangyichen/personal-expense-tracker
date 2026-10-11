@@ -89,4 +89,38 @@ describe("database foundation", () => {
       await prisma.category.deleteMany({ where: { id: category.id } });
     }
   });
+
+  it("enforces category rule type and priority constraints", async () => {
+    const category = testCategory();
+
+    try {
+      await prisma.category.create({ data: category });
+      await expect(
+        prisma.categoryRule.create({
+          data: {
+            matchType: "regex",
+            pattern: "sample",
+            normalizedPattern: "sample",
+            categoryId: category.id,
+          },
+        }),
+      ).rejects.toThrow();
+      await expect(
+        prisma.categoryRule.create({
+          data: {
+            matchType: "exact",
+            pattern: "sample",
+            normalizedPattern: "sample",
+            categoryId: category.id,
+            priority: 1001,
+          },
+        }),
+      ).rejects.toThrow();
+    } finally {
+      await prisma.categoryRule.deleteMany({
+        where: { categoryId: category.id },
+      });
+      await prisma.category.deleteMany({ where: { id: category.id } });
+    }
+  });
 });

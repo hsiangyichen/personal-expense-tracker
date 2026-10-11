@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 const fieldClassName =
-  "bg-card mt-1 min-h-11 w-full rounded-md border px-3 py-2 text-sm";
+  "bg-card mt-1 min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-blue-100";
 
 export function CategoryForm({ month }: Readonly<{ month: string }>) {
   const [state, setState] = useState<CategoryActionState>({});
@@ -38,7 +38,7 @@ export function CategoryForm({ month }: Readonly<{ month: string }>) {
       <input name="selectedMonth" type="hidden" value={month} />
       {state.message ? (
         <p
-          className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+          className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-900"
           role="alert"
         >
           {state.message}
@@ -62,8 +62,8 @@ export function CategoryForm({ month }: Readonly<{ month: string }>) {
         <input
           aria-describedby={errorId("color", state)}
           aria-invalid={hasError("color", state)}
-          className="bg-card mt-1 h-11 w-full cursor-pointer rounded-md border p-1"
-          defaultValue="#0f766e"
+          className="bg-card mt-1 h-11 w-full cursor-pointer rounded-xl border p-1"
+          defaultValue="#37a89d"
           id="color"
           name="color"
           required

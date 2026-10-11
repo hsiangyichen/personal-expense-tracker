@@ -1,5 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import type { CategoryRuleInput } from "@/lib/category-rule-validation";
+import { normalizeMerchant } from "@/lib/merchant-normalization";
 import { prisma } from "@/lib/prisma";
 import {
   InvalidImportDataError,
@@ -9,16 +11,23 @@ import {
 } from "@/lib/repositories/imports";
 
 const fingerprints: string[] = [];
+const rulePatterns: string[] = [];
 
 function fingerprint() {
   return createHash("sha256").update(randomUUID()).digest("hex");
 }
 let categoryId: string;
+let secondCategoryId: string;
 
 beforeAll(async () => {
   categoryId = (
     await prisma.category.findUniqueOrThrow({
       where: { normalizedName: "groceries" },
+    })
+  ).id;
+  secondCategoryId = (
+    await prisma.category.findUniqueOrThrow({
+      where: { normalizedName: "dining" },
     })
   ).id;
 });
@@ -33,7 +42,11 @@ afterEach(async () => {
     where: { importId: { in: importIds } },
   });
   await prisma.importBatch.deleteMany({ where: { id: { in: importIds } } });
+  await prisma.categoryRule.deleteMany({
+    where: { normalizedPattern: { in: rulePatterns } },
+  });
   fingerprints.length = 0;
+  rulePatterns.length = 0;
 });
 
 function purchase(overrides: Partial<ImportTransactionInput> = {}) {
@@ -56,14 +69,19 @@ function input(
   fileFingerprint: string,
   transactions: ImportTransactionInput[],
   importAgain = false,
+  categoryRules: CategoryRuleInput[] = [],
 ) {
   fingerprints.push(fileFingerprint);
+  for (const rule of categoryRules) {
+    rulePatterns.push(normalizeMerchant(rule.pattern));
+  }
   return {
     fileName: "synthetic-statement.csv",
     fileFingerprint,
     rowCount: transactions.length,
     importAgain,
     transactions,
+    categoryRules,
   };
 }
 
@@ -100,6 +118,38 @@ describe("CSV import repository", () => {
     expect(saved.transactions).toHaveLength(3);
   });
 
+  it("creates or updates remembered rules in the import transaction", async () => {
+    const fileFingerprint = fingerprint();
+    const pattern = `Remembered Merchant ${randomUUID()}`;
+    const normalizedPattern = normalizeMerchant(pattern);
+    await prisma.categoryRule.create({
+      data: {
+        matchType: "exact",
+        pattern,
+        normalizedPattern,
+        categoryId: secondCategoryId,
+      },
+    });
+
+    const saved = await saveImportAtomically(
+      input(fileFingerprint, [purchase({ merchant: pattern })], false, [
+        { matchType: "exact", pattern, categoryId },
+      ]),
+    );
+
+    expect(saved.learnedRuleCount).toBe(1);
+    await expect(
+      prisma.categoryRule.findUniqueOrThrow({
+        where: {
+          matchType_normalizedPattern: {
+            matchType: "exact",
+            normalizedPattern,
+          },
+        },
+      }),
+    ).resolves.toMatchObject({ categoryId, enabled: true, source: "user" });
+  });
+
   it("blocks a repeated file until Import again is explicit", async () => {
     const fileFingerprint = fingerprint();
     await saveImportAtomically(input(fileFingerprint, [purchase()]));
@@ -130,6 +180,27 @@ describe("CSV import repository", () => {
     await expect(
       prisma.transaction.count({
         where: { sourceDetails: "Synthetic Purchase" },
+      }),
+    ).resolves.toBe(0);
+  });
+  it("rolls back the import when a remembered rule cannot be saved", async () => {
+    const fileFingerprint = fingerprint();
+    const pattern = `Missing Category Rule ${randomUUID()}`;
+
+    await expect(
+      saveImportAtomically(
+        input(fileFingerprint, [purchase()], false, [
+          { matchType: "exact", pattern, categoryId: "missing-category" },
+        ]),
+      ),
+    ).rejects.toThrow();
+
+    await expect(
+      prisma.importBatch.count({ where: { fileFingerprint } }),
+    ).resolves.toBe(0);
+    await expect(
+      prisma.categoryRule.count({
+        where: { normalizedPattern: normalizeMerchant(pattern) },
       }),
     ).resolves.toBe(0);
   });

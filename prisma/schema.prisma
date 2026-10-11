@@ -8,13 +8,14 @@ datasource db {
 }
 
 model Category {
-  id             String        @id @default(cuid())
+  id             String         @id @default(cuid())
   name           String
-  normalizedName String        @unique
+  normalizedName String         @unique
   color          String
-  createdAt      DateTime      @default(now())
+  createdAt      DateTime       @default(now())
   transactions   Transaction[]
   budgets        Budget[]
+  rules          CategoryRule[]
 
   @@map("categories")
 }
@@ -36,12 +37,12 @@ model ImportBatch {
 }
 
 model Transaction {
-  id                  String      @id @default(cuid())
+  id                  String       @id @default(cuid())
   transactionDate     String
   postDate            String?
   sourceAmountMinor   Int
   spendingAmountMinor Int
-  currency            String      @default("CAD")
+  currency            String       @default("CAD")
   merchant            String
   sourceDetails       String?
   categoryId          String?
@@ -51,9 +52,9 @@ model Transaction {
   source              String
   sourceType          String?
   importId            String?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  category            Category?   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  category            Category?    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   import              ImportBatch? @relation(fields: [importId], references: [id], onDelete: Restrict)
 
   @@index([transactionDate])
@@ -74,4 +75,22 @@ model Budget {
   @@unique([categoryId, monthKey])
   @@index([monthKey])
   @@map("budgets")
+}
+
+model CategoryRule {
+  id                String   @id @default(cuid())
+  matchType         String
+  pattern           String
+  normalizedPattern String
+  categoryId        String
+  priority          Int      @default(0)
+  enabled           Boolean  @default(true)
+  source            String   @default("user")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  category          Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([matchType, normalizedPattern])
+  @@index([categoryId, enabled])
+  @@map("category_rules")
 }

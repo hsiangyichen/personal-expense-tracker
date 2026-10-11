@@ -12,10 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import type { CsvReviewRow } from "@/lib/csv-parser";
 import type { ImportRowDecision } from "@/lib/import-workflow";
+import { normalizeMerchant } from "@/lib/merchant-normalization";
 import { formatCadFromCents } from "@/lib/money";
 
 const fieldClassName =
-  "bg-card min-h-11 w-full rounded-md border px-3 py-2 text-sm";
+  "bg-card min-h-11 w-full rounded-xl border px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-blue-100";
 
 type CategoryOption = {
   id: string;
@@ -47,6 +48,16 @@ export function ImportReview({ categories }: ImportReviewProps) {
     () =>
       new Set(
         preview?.duplicateGroups.flatMap((group) => group.rowNumbers) ?? [],
+      ),
+    [preview],
+  );
+  const categorizationsByRow = useMemo(
+    () =>
+      new Map(
+        preview?.categorizations.map((categorization) => [
+          categorization.rowNumber,
+          categorization,
+        ]) ?? [],
       ),
     [preview],
   );
@@ -88,6 +99,11 @@ export function ImportReview({ categories }: ImportReviewProps) {
           The file stays on this computer. Nothing is saved until you finish
           reviewing every row.
         </p>
+        <p className="bg-background text-muted-foreground mt-4 rounded-xl p-3 text-sm leading-relaxed">
+          Use a CSV with these columns: transaction_date, post_date, type,
+          details, amount, and currency. Dates must use YYYY-MM-DD and currency
+          must be CAD.
+        </p>
         <form
           className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
           onSubmit={(event) => {
@@ -114,7 +130,12 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
               setSelectedFile(file);
               setPreview(response.preview);
-              setDecisions(initialDecisions(response.preview.rows));
+              setDecisions(
+                initialDecisions(
+                  response.preview.rows,
+                  response.preview.categorizations,
+                ),
+              );
               setImportAgain(false);
             });
           }}
@@ -125,7 +146,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
             </label>
             <input
               accept=".csv,text/csv"
-              className={`${fieldClassName} file:mr-3 file:rounded file:border-0 file:bg-transparent file:font-medium`}
+              className={`${fieldClassName} file:bg-muted file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:font-semibold`}
               id="csv-file"
               name="file"
               disabled={pending}
@@ -153,7 +174,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
       {message ? (
         <p
-          className="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-900"
+          className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-900"
           role="alert"
         >
           {message}
@@ -162,11 +183,11 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
       {preview ? (
         <>
-          <ImportSummary preview={preview} />
+          <ImportSummary decisions={decisions} preview={preview} />
 
           {preview.alreadyImported ? (
             <div
-              className="rounded-md border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
+              className="rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
               role="alert"
             >
               <p className="font-semibold">This file was already imported.</p>
@@ -184,7 +205,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
           {countedSimilarRefunds.length > 0 ? (
             <div
-              className="rounded-md border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
+              className="rounded-xl border border-amber-400 bg-amber-50 p-4 text-sm text-amber-950"
               role="alert"
             >
               <p className="font-semibold">Similar refunds are both counted.</p>
@@ -201,6 +222,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
 
           <ReviewTable
             categories={categories}
+            categorizations={categorizationsByRow}
             decisions={decisions}
             duplicateRows={duplicateRows}
             onDecisionChange={(rowNumber, change) =>
@@ -278,9 +300,47 @@ export function ImportReview({ categories }: ImportReviewProps) {
   );
 }
 
-function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
+function ImportSummary({
+  decisions,
+  preview,
+}: Readonly<{
+  decisions: Record<number, ImportRowDecision>;
+  preview: ImportPreview;
+}>) {
   const validRows = preview.rows.filter((row) => row.status === "valid");
+  const categorizationsByRow = new Map(
+    preview.categorizations.map((categorization) => [
+      categorization.rowNumber,
+      categorization,
+    ]),
+  );
+  const automaticSelections = validRows.filter((row) => {
+    const decision = decisions[row.rowNumber];
+    const categorization = categorizationsByRow.get(row.rowNumber);
+    return (
+      row.kind !== "payment" &&
+      decision?.duplicateDecision !== "exclude" &&
+      decision?.refundDecision !== "exclude" &&
+      categorization?.status === "matched" &&
+      decision?.categoryId === categorization.categoryId &&
+      normalizeMerchant(decision?.merchant ?? "") ===
+        categorization.normalizedMerchant
+    );
+  }).length;
+  const needsCategory = validRows.filter((row) => {
+    const decision = decisions[row.rowNumber];
+    if (
+      row.kind === "payment" ||
+      decision?.duplicateDecision === "exclude" ||
+      (row.kind === "refund" && decision?.refundDecision === "exclude")
+    ) {
+      return false;
+    }
+    return !decision?.categoryId;
+  }).length;
   const items = [
+    { label: "Automatically selected", value: automaticSelections },
+    { label: "Needs category", value: needsCategory },
     {
       label: "Included purchases",
       value: validRows.filter((row) => row.kind === "expense").length,
@@ -308,9 +368,9 @@ function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
       <p className="text-muted-foreground mt-1 text-sm">
         {preview.fileName} · {preview.rows.length} rows
       </p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
         {items.map((item) => (
-          <Card key={item.label}>
+          <Card className="rounded-xl" key={item.label}>
             <p className="text-muted-foreground text-sm">{item.label}</p>
             <p className="mt-1 text-2xl font-bold">{item.value}</p>
           </Card>
@@ -322,12 +382,14 @@ function ImportSummary({ preview }: Readonly<{ preview: ImportPreview }>) {
 
 function ReviewTable({
   categories,
+  categorizations,
   decisions,
   duplicateRows,
   onDecisionChange,
   rows,
 }: Readonly<{
   categories: CategoryOption[];
+  categorizations: Map<number, ImportPreview["categorizations"][number]>;
   decisions: Record<number, ImportRowDecision>;
   duplicateRows: Set<number>;
   onDecisionChange: (
@@ -338,14 +400,37 @@ function ReviewTable({
 }>) {
   return (
     <section aria-labelledby="review-heading" className="min-w-0">
-      <h2 className="text-xl font-semibold" id="review-heading">
-        Review rows
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold" id="review-heading">
+          Review rows
+        </h2>
+        <Link
+          className="text-primary text-sm font-semibold hover:underline"
+          href="/categories#categorization-rules"
+        >
+          Manage categorization rules
+        </Link>
+      </div>
       <p className="text-muted-foreground mt-1 text-sm">
         Correct merchant names, assign categories, and resolve every warning.
         Original details remain unchanged.
       </p>
-      <div className="relative mt-3 w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl border bg-white">
+      <div className="mt-3 grid min-w-0 gap-3 md:hidden">
+        {rows.map((row) => (
+          <MobileReviewCard
+            categories={categories}
+            categorization={categorizations.get(row.rowNumber)}
+            decision={decisions[row.rowNumber]}
+            duplicateWarning={duplicateRows.has(row.rowNumber)}
+            key={row.rowNumber}
+            onDecisionChange={(change) =>
+              onDecisionChange(row.rowNumber, change)
+            }
+            row={row}
+          />
+        ))}
+      </div>
+      <div className="relative mt-3 hidden w-full max-w-full overflow-x-auto overscroll-x-contain rounded-xl border bg-white md:block">
         <table className="w-full min-w-[1120px] border-collapse text-left text-sm">
           <thead className="bg-slate-100">
             <tr>
@@ -373,6 +458,7 @@ function ReviewTable({
             {rows.map((row) => (
               <ReviewRow
                 categories={categories}
+                categorization={categorizations.get(row.rowNumber)}
                 decision={decisions[row.rowNumber]}
                 duplicateWarning={duplicateRows.has(row.rowNumber)}
                 key={row.rowNumber}
@@ -389,14 +475,16 @@ function ReviewTable({
   );
 }
 
-function ReviewRow({
+function MobileReviewCard({
   categories,
+  categorization,
   decision,
   duplicateWarning,
   onDecisionChange,
   row,
 }: Readonly<{
   categories: CategoryOption[];
+  categorization?: ImportPreview["categorizations"][number];
   decision: ImportRowDecision;
   duplicateWarning: boolean;
   onDecisionChange: (change: Partial<ImportRowDecision>) => void;
@@ -404,6 +492,286 @@ function ReviewRow({
 }>) {
   const excludedDuplicate = decision?.duplicateDecision === "exclude";
   const merchantTooLong = (decision?.merchant?.trim().length ?? 0) > 120;
+  const automaticMatch =
+    categorization?.status === "matched" &&
+    normalizeMerchant(decision?.merchant ?? "") ===
+      categorization.normalizedMerchant &&
+    decision?.categoryId === categorization.categoryId;
+  const selectedCategory = categories.find(
+    (category) => category.id === decision?.categoryId,
+  );
+  const canRememberRule =
+    row.status === "valid" &&
+    row.kind !== "payment" &&
+    Boolean(decision?.categoryId) &&
+    !excludedDuplicate &&
+    !automaticMatch &&
+    (row.kind !== "refund" || decision?.refundDecision === "count");
+
+  return (
+    <article
+      className="bg-card min-w-0 rounded-xl border p-4 shadow-sm"
+      data-row-number={row.rowNumber}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-muted-foreground text-xs font-semibold">
+            Row {row.rowNumber} · {row.transactionDate || "No date"}
+          </p>
+          <p className="mt-1 font-semibold break-words">
+            {row.sourceDetails || "No original details"}
+          </p>
+        </div>
+        <span className="shrink-0 font-bold tabular-nums">
+          {row.status === "valid"
+            ? formatCadFromCents(BigInt(row.sourceAmountMinor))
+            : row.sourceAmount || "—"}
+        </span>
+      </div>
+      <p className="text-muted-foreground mt-2 text-xs">
+        {row.sourceType || "Unknown type"}
+      </p>
+
+      {row.status === "invalid" ? (
+        <div className="mt-4">
+          <ul className="list-disc pl-5 text-sm text-red-800">
+            {row.errors.map((error) => (
+              <li key={error}>{error}</li>
+            ))}
+          </ul>
+          <label className="mt-3 flex min-h-11 items-center gap-2 text-sm">
+            <input
+              aria-label={`Exclude invalid row ${row.rowNumber}`}
+              checked={decision?.invalidDecision === "exclude"}
+              className="size-5"
+              onChange={(event) =>
+                onDecisionChange({
+                  invalidDecision: event.target.checked ? "exclude" : undefined,
+                })
+              }
+              type="checkbox"
+            />
+            Exclude invalid row
+          </label>
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-4">
+          <div>
+            <label
+              className="text-sm font-medium"
+              htmlFor={`mobile-merchant-${row.rowNumber}`}
+            >
+              Merchant
+            </label>
+            <input
+              aria-label={`Merchant for row ${row.rowNumber}`}
+              className={fieldClassName}
+              disabled={excludedDuplicate}
+              id={`mobile-merchant-${row.rowNumber}`}
+              maxLength={120}
+              onChange={(event) => {
+                const merchant = event.target.value;
+                onDecisionChange({
+                  merchant,
+                  categoryId:
+                    automaticMatch &&
+                    normalizeMerchant(merchant) !==
+                      categorization.normalizedMerchant
+                      ? ""
+                      : decision?.categoryId,
+                  rememberCategoryRule: false,
+                });
+              }}
+              value={decision?.merchant ?? ""}
+            />
+            {merchantTooLong ? (
+              <p className="mt-1 text-xs text-red-700">
+                Shorten the merchant to 120 characters.
+              </p>
+            ) : null}
+          </div>
+
+          {row.kind === "payment" ? (
+            <p className="bg-background text-muted-foreground rounded-xl p-3 text-sm">
+              Payment excluded from spending · No category required
+            </p>
+          ) : (
+            <div>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {automaticMatch ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
+                    <span className="size-1.5 rounded-full bg-emerald-600" />
+                    Automatic · 100%
+                  </span>
+                ) : decision?.categoryId ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">
+                    <span className="size-1.5 rounded-full bg-blue-600" />
+                    Selected manually
+                  </span>
+                ) : categorization?.status === "conflict" ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+                    <span className="size-1.5 rounded-full bg-amber-600" />
+                    Rule conflict
+                  </span>
+                ) : (
+                  <span className="bg-muted text-muted-foreground inline-flex rounded-full px-2 py-1 text-xs font-semibold">
+                    Needs category
+                  </span>
+                )}
+              </div>
+              <label
+                className="text-sm font-medium"
+                htmlFor={`mobile-category-${row.rowNumber}`}
+              >
+                Category
+              </label>
+              <select
+                aria-label={`Category for row ${row.rowNumber}`}
+                className={fieldClassName}
+                disabled={
+                  excludedDuplicate ||
+                  (row.kind === "refund" &&
+                    decision?.refundDecision !== "count")
+                }
+                id={`mobile-category-${row.rowNumber}`}
+                onChange={(event) =>
+                  onDecisionChange({
+                    categoryId: event.target.value,
+                    rememberCategoryRule: false,
+                  })
+                }
+                value={decision?.categoryId ?? ""}
+              >
+                <option value="">Choose a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              {automaticMatch && categorization.status === "matched" ? (
+                <p className="text-muted-foreground mt-2 text-xs">
+                  {categorization.explanation}
+                </p>
+              ) : null}
+              {canRememberRule && selectedCategory ? (
+                <label className="text-muted-foreground mt-3 flex items-start gap-2 text-xs leading-relaxed">
+                  <input
+                    aria-label={`Always categorize ${decision?.merchant ?? "this merchant"} as ${selectedCategory.name}`}
+                    checked={decision?.rememberCategoryRule === true}
+                    className="mt-0.5 size-4 shrink-0"
+                    onChange={(event) =>
+                      onDecisionChange({
+                        rememberCategoryRule: event.target.checked,
+                      })
+                    }
+                    type="checkbox"
+                  />
+                  Always use {selectedCategory.name} for this merchant
+                </label>
+              ) : null}
+            </div>
+          )}
+
+          {row.kind === "refund" ? (
+            <div>
+              <label
+                className="text-sm font-medium"
+                htmlFor={`mobile-refund-${row.rowNumber}`}
+              >
+                Refund decision
+              </label>
+              <select
+                aria-label="Refund"
+                className={fieldClassName}
+                disabled={excludedDuplicate}
+                id={`mobile-refund-${row.rowNumber}`}
+                onChange={(event) =>
+                  onDecisionChange({
+                    refundDecision:
+                      (event.target.value as "count" | "exclude") || undefined,
+                    categoryId:
+                      event.target.value === "count"
+                        ? decision?.categoryId
+                        : "",
+                    rememberCategoryRule: false,
+                  })
+                }
+                value={decision?.refundDecision ?? ""}
+              >
+                <option value="">Choose</option>
+                <option value="count">Count as refund</option>
+                <option value="exclude">Exclude from spending</option>
+              </select>
+            </div>
+          ) : null}
+
+          {duplicateWarning ? (
+            <div>
+              <label
+                className="text-sm font-medium"
+                htmlFor={`mobile-duplicate-${row.rowNumber}`}
+              >
+                Possible duplicate
+              </label>
+              <select
+                aria-label="Possible duplicate"
+                className={fieldClassName}
+                id={`mobile-duplicate-${row.rowNumber}`}
+                onChange={(event) =>
+                  onDecisionChange({
+                    duplicateDecision:
+                      (event.target.value as "include" | "exclude") ||
+                      undefined,
+                    rememberCategoryRule: false,
+                  })
+                }
+                value={decision?.duplicateDecision ?? ""}
+              >
+                <option value="">Choose</option>
+                <option value="include">Include row</option>
+                <option value="exclude">Exclude row</option>
+              </select>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </article>
+  );
+}
+
+function ReviewRow({
+  categories,
+  categorization,
+  decision,
+  duplicateWarning,
+  onDecisionChange,
+  row,
+}: Readonly<{
+  categories: CategoryOption[];
+  categorization?: ImportPreview["categorizations"][number];
+  decision: ImportRowDecision;
+  duplicateWarning: boolean;
+  onDecisionChange: (change: Partial<ImportRowDecision>) => void;
+  row: CsvReviewRow;
+}>) {
+  const excludedDuplicate = decision?.duplicateDecision === "exclude";
+  const merchantTooLong = (decision?.merchant?.trim().length ?? 0) > 120;
+  const automaticMatch =
+    categorization?.status === "matched" &&
+    normalizeMerchant(decision?.merchant ?? "") ===
+      categorization.normalizedMerchant &&
+    decision?.categoryId === categorization.categoryId;
+  const selectedCategory = categories.find(
+    (category) => category.id === decision?.categoryId,
+  );
+  const canRememberRule =
+    row.status === "valid" &&
+    row.kind !== "payment" &&
+    Boolean(decision?.categoryId) &&
+    !excludedDuplicate &&
+    !automaticMatch &&
+    (row.kind !== "refund" || decision?.refundDecision === "count");
 
   return (
     <tr className="border-t align-top" data-row-number={row.rowNumber}>
@@ -465,9 +833,19 @@ function ReviewRow({
               disabled={excludedDuplicate}
               id={`merchant-${row.rowNumber}`}
               maxLength={120}
-              onChange={(event) =>
-                onDecisionChange({ merchant: event.target.value })
-              }
+              onChange={(event) => {
+                const merchant = event.target.value;
+                onDecisionChange({
+                  merchant,
+                  categoryId:
+                    automaticMatch &&
+                    normalizeMerchant(merchant) !==
+                      categorization.normalizedMerchant
+                      ? ""
+                      : decision?.categoryId,
+                  rememberCategoryRule: false,
+                });
+              }}
               type="text"
               value={decision?.merchant ?? ""}
             />
@@ -480,11 +858,33 @@ function ReviewRow({
               </p>
             ) : null}
           </td>
-          <td className="px-3 py-3">
+          <td className="min-w-64 px-3 py-3">
             {row.kind === "payment" ? (
               <span className="text-muted-foreground">Not required</span>
             ) : (
               <>
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                  {automaticMatch ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
+                      <span className="size-1.5 rounded-full bg-emerald-600" />
+                      Automatic · 100%
+                    </span>
+                  ) : decision?.categoryId ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-800">
+                      <span className="size-1.5 rounded-full bg-blue-600" />
+                      Selected manually
+                    </span>
+                  ) : categorization?.status === "conflict" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+                      <span className="size-1.5 rounded-full bg-amber-600" />
+                      Rule conflict
+                    </span>
+                  ) : (
+                    <span className="bg-muted text-muted-foreground inline-flex rounded-full px-2 py-1 text-xs font-semibold">
+                      Needs category
+                    </span>
+                  )}
+                </div>
                 <label
                   className="sr-only"
                   htmlFor={`category-${row.rowNumber}`}
@@ -500,7 +900,10 @@ function ReviewRow({
                   }
                   id={`category-${row.rowNumber}`}
                   onChange={(event) =>
-                    onDecisionChange({ categoryId: event.target.value })
+                    onDecisionChange({
+                      categoryId: event.target.value,
+                      rememberCategoryRule: false,
+                    })
                   }
                   value={decision?.categoryId ?? ""}
                 >
@@ -511,6 +914,27 @@ function ReviewRow({
                     </option>
                   ))}
                 </select>
+                {automaticMatch && categorization.status === "matched" ? (
+                  <p className="text-muted-foreground mt-2 text-xs leading-relaxed">
+                    {categorization.explanation}
+                  </p>
+                ) : null}
+                {canRememberRule && selectedCategory ? (
+                  <label className="text-muted-foreground mt-3 flex items-start gap-2 text-xs leading-relaxed">
+                    <input
+                      aria-label={`Always categorize ${decision?.merchant ?? "this merchant"} as ${selectedCategory.name}`}
+                      checked={decision?.rememberCategoryRule === true}
+                      className="mt-0.5 size-4 shrink-0"
+                      onChange={(event) =>
+                        onDecisionChange({
+                          rememberCategoryRule: event.target.checked,
+                        })
+                      }
+                      type="checkbox"
+                    />
+                    Always use {selectedCategory.name} for this merchant
+                  </label>
+                ) : null}
               </>
             )}
           </td>
@@ -539,6 +963,7 @@ function ReviewRow({
                         event.target.value === "count"
                           ? decision?.categoryId
                           : "",
+                      rememberCategoryRule: false,
                     })
                   }
                   value={decision?.refundDecision ?? ""}
@@ -565,6 +990,7 @@ function ReviewRow({
                       duplicateDecision:
                         (event.target.value as "include" | "exclude") ||
                         undefined,
+                      rememberCategoryRule: false,
                     })
                   }
                   value={decision?.duplicateDecision ?? ""}
@@ -592,17 +1018,20 @@ function ImportResult({
     { label: "Refund rows", value: summary.refundCount },
     { label: "Duplicate warnings", value: summary.duplicateWarningCount },
     { label: "Invalid rows excluded", value: summary.invalidExcludedCount },
+    { label: "Rules learned", value: summary.learnedRuleCount },
   ];
 
   return (
     <section aria-labelledby="result-heading" className="mt-6">
-      <p className="text-primary text-sm font-medium">Import complete</p>
+      <p className="text-accent text-xs font-bold tracking-[0.16em] uppercase">
+        Import complete
+      </p>
       <h2 className="mt-1 text-2xl font-bold" id="result-heading">
         Statement saved
       </h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {items.map((item) => (
-          <Card key={item.label}>
+          <Card className="rounded-xl" key={item.label}>
             <p className="text-muted-foreground text-sm">{item.label}</p>
             <p className="mt-1 text-2xl font-bold">{item.value}</p>
           </Card>
@@ -616,7 +1045,7 @@ function ImportResult({
       <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={onReset}>Review another CSV</Button>
         <Link
-          className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium"
+          className="bg-card hover:bg-muted inline-flex min-h-11 items-center justify-center rounded-xl border px-4 py-2 text-sm font-medium"
           href="/expenses"
         >
           View expenses
@@ -626,18 +1055,34 @@ function ImportResult({
   );
 }
 
-function initialDecisions(rows: CsvReviewRow[]) {
-  return Object.fromEntries(
-    rows.map((row) => [
-      row.rowNumber,
-      row.status === "valid"
-        ? {
-            rowNumber: row.rowNumber,
-            merchant: row.merchant,
-            categoryId: "",
-          }
-        : { rowNumber: row.rowNumber },
+function initialDecisions(
+  rows: CsvReviewRow[],
+  categorizations: ImportPreview["categorizations"],
+) {
+  const categorizationsByRow = new Map(
+    categorizations.map((categorization) => [
+      categorization.rowNumber,
+      categorization,
     ]),
+  );
+
+  return Object.fromEntries(
+    rows.map((row) => {
+      const categorization = categorizationsByRow.get(row.rowNumber);
+      return [
+        row.rowNumber,
+        row.status === "valid"
+          ? {
+              rowNumber: row.rowNumber,
+              merchant: row.merchant,
+              categoryId:
+                categorization?.status === "matched"
+                  ? categorization.categoryId
+                  : "",
+            }
+          : { rowNumber: row.rowNumber },
+      ];
+    }),
   );
 }
 

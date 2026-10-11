@@ -11,10 +11,15 @@ import {
   type SimilarRefundPair,
 } from "@/lib/import-review";
 import {
+  categorizeImportRows,
+  type ImportRowCategorization,
+} from "@/lib/import-categorization";
+import {
   ImportResolutionError,
   parseImportDecisions,
   resolveImportRows,
 } from "@/lib/import-workflow";
+import { listCategoryRules } from "@/lib/repositories/category-rules";
 import {
   InvalidImportDataError,
   RepeatedImportError,
@@ -37,6 +42,7 @@ export type ImportPreview = {
   rows: CsvReviewRow[];
   duplicateGroups: DuplicateRowGroup[];
   similarRefundPairs: SimilarRefundPair[];
+  categorizations: ImportRowCategorization[];
   alreadyImported: boolean;
 };
 
@@ -53,6 +59,7 @@ export type ImportSaveSummary = {
   duplicateWarningCount: number;
   duplicateExcludedCount: number;
   invalidExcludedCount: number;
+  learnedRuleCount: number;
 };
 
 export type ImportSaveResult =
@@ -75,7 +82,10 @@ export async function previewImportAction(
     }
 
     const fingerprint = calculateFileFingerprint(uploaded.bytes);
-    const previousImports = await findImportsByFingerprint(fingerprint);
+    const [previousImports, rules] = await Promise.all([
+      findImportsByFingerprint(fingerprint),
+      listCategoryRules({ enabledOnly: true }),
+    ]);
 
     return {
       success: true,
@@ -85,6 +95,7 @@ export async function previewImportAction(
         rows: parsed.rows,
         duplicateGroups: findDuplicateRowGroups(parsed.rows),
         similarRefundPairs: findSimilarRefundPairs(parsed.rows),
+        categorizations: categorizeImportRows(parsed.rows, rules),
         alreadyImported: previousImports.length > 0,
       },
     };
@@ -138,10 +149,12 @@ export async function saveImportAction(
       rowCount: parsed.rows.length,
       importAgain: formData.get("importAgain") === "true",
       transactions: resolution.transactions,
+      categoryRules: resolution.categoryRules,
     });
 
     revalidatePath("/");
     revalidatePath("/expenses");
+    revalidatePath("/categories");
 
     return {
       success: true,
@@ -157,6 +170,7 @@ export async function saveImportAction(
         duplicateWarningCount: duplicateGroups.length,
         duplicateExcludedCount: resolution.duplicateExcludedCount,
         invalidExcludedCount: resolution.invalidExcludedCount,
+        learnedRuleCount: saved.learnedRuleCount,
       },
     };
   } catch (error) {

@@ -88,29 +88,27 @@ test("reviews decisions and imports a synthetic statement", async ({
     });
     await expect(importButton).toBeDisabled();
 
-    await page.getByLabel("Merchant for row 2").fill(correctedMerchant);
-    await page.getByLabel("Category for row 2").selectOption({
+    await visibleControl(page, "Merchant for row 2").fill(correctedMerchant);
+    await visibleControl(page, "Category for row 2").selectOption({
       label: "Groceries",
     });
-    await page.getByLabel("Possible duplicate").nth(0).selectOption("include");
+    await visibleControl(page, "Possible duplicate")
+      .nth(0)
+      .selectOption("include");
 
-    await page.getByLabel("Category for row 3").selectOption({
+    await visibleControl(page, "Category for row 3").selectOption({
       label: "Dining",
     });
-    await page.getByLabel("Possible duplicate").nth(1).selectOption("exclude");
+    await visibleControl(page, "Possible duplicate")
+      .nth(1)
+      .selectOption("exclude");
 
-    await page
-      .getByLabel("Refund", { exact: true })
-      .nth(0)
-      .selectOption("count");
-    await page.getByLabel("Category for row 5").selectOption({
+    await visibleControl(page, "Refund", true).nth(0).selectOption("count");
+    await visibleControl(page, "Category for row 5").selectOption({
       label: "Groceries",
     });
-    await page
-      .getByLabel("Refund", { exact: true })
-      .nth(1)
-      .selectOption("count");
-    await page.getByLabel("Category for row 6").selectOption({
+    await visibleControl(page, "Refund", true).nth(1).selectOption("count");
+    await visibleControl(page, "Category for row 6").selectOption({
       label: "Groceries",
     });
 
@@ -118,15 +116,12 @@ test("reviews decisions and imports a synthetic statement", async ({
       page.getByText("Similar refunds are both counted."),
     ).toBeVisible();
 
-    await page
-      .getByLabel("Refund", { exact: true })
-      .nth(1)
-      .selectOption("exclude");
+    await visibleControl(page, "Refund", true).nth(1).selectOption("exclude");
     await expect(
       page.getByText("Similar refunds are both counted."),
     ).toHaveCount(0);
 
-    await page.getByLabel("Exclude invalid row 7").check();
+    await visibleControl(page, "Exclude invalid row 7").check();
     await expect(
       page.getByText("All required decisions are complete."),
     ).toBeVisible();
@@ -211,7 +206,7 @@ test("blocks a repeated file until Import again is selected", async ({
     await expect(
       page.getByText("This file was already imported."),
     ).toBeVisible();
-    await page.getByLabel("Category for row 2").selectOption({
+    await visibleControl(page, "Category for row 2").selectOption({
       label: "Groceries",
     });
 
@@ -233,6 +228,10 @@ test("blocks a repeated file until Import again is selected", async ({
     await removeImports(fingerprint);
   }
 });
+
+function visibleControl(page: Page, label: string, exact = false) {
+  return page.getByLabel(label, { exact }).filter({ visible: true });
+}
 
 function resultCard(page: Page, label: string) {
   return page.locator("div.rounded-xl").filter({ hasText: label });
