@@ -33,7 +33,7 @@ This checklist breaks the MVP into small, testable development tasks. Complete t
 - [x] **T013 — Create the Budget model.** Add category, `monthKey`, amount, and a unique category-and-month constraint.
 - [x] **T014 — Add database relationships.** Connect transactions to categories and imports, and budgets to categories.
 - [x] **T015 — Create the first migration.** Generate and apply the initial SQLite migration.
-- [x] **T016 — Seed default categories.** Add groceries, dining, transportation, housing, shopping, entertainment, health, and other.
+- [x] **T016 — Seed default categories.** Add groceries, dining, transportation, housing, shopping, entertainment, health, clothing, subscriptions, internet, phone, travel, personal care, household, education, car insurance, medical aesthetics, and other.
 - [x] **T017 — Add the data-access boundary.** Create repository functions so pages do not call Prisma directly.
 - [x] **T018 — Test database constraints.** Verify category uniqueness, budget uniqueness, and required category rules.
 

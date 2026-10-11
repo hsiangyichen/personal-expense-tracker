@@ -19,8 +19,32 @@ describe("database foundation", () => {
     await prisma.$disconnect();
   });
 
-  it("contains the eight default categories", async () => {
-    await expect(prisma.category.count()).resolves.toBe(8);
+  it("contains the approved default categories", async () => {
+    const categories = await prisma.category.findMany({
+      select: { name: true },
+      orderBy: { name: "asc" },
+    });
+
+    expect(categories.map(({ name }) => name)).toEqual([
+      "Car Insurance",
+      "Clothing",
+      "Dining",
+      "Education",
+      "Entertainment",
+      "Groceries",
+      "Health",
+      "Household",
+      "Housing",
+      "Internet",
+      "Medical Aesthetics",
+      "Other",
+      "Personal Care",
+      "Phone",
+      "Shopping",
+      "Subscriptions",
+      "Transportation",
+      "Travel",
+    ]);
   });
 
   it("rejects duplicate normalized category names", async () => {

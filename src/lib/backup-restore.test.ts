@@ -20,6 +20,8 @@ import { RestoreError, restoreDatabaseBackup } from "@/lib/restore-service";
 import type { StoragePaths } from "@/lib/storage-paths";
 import { prepareTestDatabase } from "../../test/prepare-database";
 
+const DEFAULT_CATEGORY_COUNT = 18;
+
 const scratchRoot =
   process.env.KIROCREW_SCRATCH ?? path.resolve("data/test-scratch");
 let suiteDirectory: string;
@@ -48,7 +50,9 @@ describe("database backup", () => {
     expect(result.path.startsWith(paths.backupDirectory)).toBe(true);
     expect(result.createdAt).toBe("2026-10-04T09:00:00.000Z");
     expect(result.sizeBytes).toBeGreaterThan(0);
-    expect(inspection.counts.categories).toBeGreaterThanOrEqual(8);
+    expect(inspection.counts.categories).toBeGreaterThanOrEqual(
+      DEFAULT_CATEGORY_COUNT,
+    );
   });
 });
 
@@ -74,7 +78,7 @@ describe("database restore", () => {
     const safety = await inspectDatabaseFile(result.safetyCopyPath);
 
     expect(restored.counts).toEqual(expected.counts);
-    expect(safety.counts.categories).toBe(9);
+    expect(safety.counts.categories).toBe(DEFAULT_CATEGORY_COUNT + 1);
     expect(result.counts).toEqual(expected.counts);
     await expect(readFile(`${paths.databasePath}-wal`)).rejects.toMatchObject({
       code: "ENOENT",
