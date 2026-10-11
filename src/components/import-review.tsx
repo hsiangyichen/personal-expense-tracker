@@ -61,15 +61,13 @@ export function ImportReview({ categories }: ImportReviewProps) {
       ),
     [preview],
   );
-  const unresolved = preview
-    ? countUnresolved(preview.rows, decisions, duplicateRows)
-    : 0;
+  const unresolved = preview ? countUnresolved(preview.rows, decisions) : 0;
   const countedSimilarRefunds = preview
     ? preview.similarRefundPairs.filter(({ rowNumbers }) =>
         rowNumbers.every(
           (rowNumber) =>
-            decisions[rowNumber]?.refundDecision === "count" &&
-            decisions[rowNumber]?.duplicateDecision !== "exclude",
+            !decisions[rowNumber]?.excluded &&
+            Boolean(decisions[rowNumber]?.categoryId),
         ),
       )
     : [];
@@ -319,8 +317,7 @@ function ImportSummary({
     const categorization = categorizationsByRow.get(row.rowNumber);
     return (
       row.kind !== "payment" &&
-      decision?.duplicateDecision !== "exclude" &&
-      decision?.refundDecision !== "exclude" &&
+      !decision?.excluded &&
       categorization?.status === "matched" &&
       decision?.categoryId === categorization.categoryId &&
       normalizeMerchant(decision?.merchant ?? "") ===
@@ -329,11 +326,7 @@ function ImportSummary({
   }).length;
   const needsCategory = validRows.filter((row) => {
     const decision = decisions[row.rowNumber];
-    if (
-      row.kind === "payment" ||
-      decision?.duplicateDecision === "exclude" ||
-      (row.kind === "refund" && decision?.refundDecision === "exclude")
-    ) {
+    if (row.kind === "payment" || decision?.excluded) {
       return false;
     }
     return !decision?.categoryId;
@@ -412,7 +405,8 @@ function ReviewTable({
         </Link>
       </div>
       <p className="text-muted-foreground mt-1 text-sm">
-        Correct merchant names, assign categories, and resolve every warning.
+        Correct merchant names and assign categories. Kept purchases and refunds
+        count toward spending, payments remain excluded, and Delete skips a row.
         Original details remain unchanged.
       </p>
       <div className="mt-3 grid min-w-0 gap-3 md:hidden">
@@ -442,7 +436,7 @@ function ReviewTable({
                 "Original details",
                 "Merchant",
                 "Category",
-                "Decision",
+                "Row actions",
               ].map((heading) => (
                 <th
                   className="px-3 py-3 font-semibold"
@@ -490,7 +484,7 @@ function MobileReviewCard({
   onDecisionChange: (change: Partial<ImportRowDecision>) => void;
   row: CsvReviewRow;
 }>) {
-  const excludedDuplicate = decision?.duplicateDecision === "exclude";
+  const deleted = decision?.excluded === true;
   const merchantTooLong = (decision?.merchant?.trim().length ?? 0) > 120;
   const automaticMatch =
     categorization?.status === "matched" &&
@@ -504,9 +498,8 @@ function MobileReviewCard({
     row.status === "valid" &&
     row.kind !== "payment" &&
     Boolean(decision?.categoryId) &&
-    !excludedDuplicate &&
-    !automaticMatch &&
-    (row.kind !== "refund" || decision?.refundDecision === "count");
+    !deleted &&
+    !automaticMatch;
 
   return (
     <article
@@ -539,20 +532,6 @@ function MobileReviewCard({
               <li key={error}>{error}</li>
             ))}
           </ul>
-          <label className="mt-3 flex min-h-11 items-center gap-2 text-sm">
-            <input
-              aria-label={`Exclude invalid row ${row.rowNumber}`}
-              checked={decision?.invalidDecision === "exclude"}
-              className="size-5"
-              onChange={(event) =>
-                onDecisionChange({
-                  invalidDecision: event.target.checked ? "exclude" : undefined,
-                })
-              }
-              type="checkbox"
-            />
-            Exclude invalid row
-          </label>
         </div>
       ) : (
         <div className="mt-4 grid gap-4">
@@ -566,7 +545,7 @@ function MobileReviewCard({
             <input
               aria-label={`Merchant for row ${row.rowNumber}`}
               className={fieldClassName}
-              disabled={excludedDuplicate}
+              disabled={deleted}
               id={`mobile-merchant-${row.rowNumber}`}
               maxLength={120}
               onChange={(event) => {
@@ -628,11 +607,7 @@ function MobileReviewCard({
               <select
                 aria-label={`Category for row ${row.rowNumber}`}
                 className={fieldClassName}
-                disabled={
-                  excludedDuplicate ||
-                  (row.kind === "refund" &&
-                    decision?.refundDecision !== "count")
-                }
+                disabled={deleted}
                 id={`mobile-category-${row.rowNumber}`}
                 onChange={(event) =>
                   onDecisionChange({
@@ -674,68 +649,26 @@ function MobileReviewCard({
           )}
 
           {row.kind === "refund" ? (
-            <div>
-              <label
-                className="text-sm font-medium"
-                htmlFor={`mobile-refund-${row.rowNumber}`}
-              >
-                Refund decision
-              </label>
-              <select
-                aria-label="Refund"
-                className={fieldClassName}
-                disabled={excludedDuplicate}
-                id={`mobile-refund-${row.rowNumber}`}
-                onChange={(event) =>
-                  onDecisionChange({
-                    refundDecision:
-                      (event.target.value as "count" | "exclude") || undefined,
-                    categoryId:
-                      event.target.value === "count"
-                        ? decision?.categoryId
-                        : "",
-                    rememberCategoryRule: false,
-                  })
-                }
-                value={decision?.refundDecision ?? ""}
-              >
-                <option value="">Choose</option>
-                <option value="count">Count as refund</option>
-                <option value="exclude">Exclude from spending</option>
-              </select>
-            </div>
+            <p className="rounded-xl bg-blue-50 p-3 text-sm text-blue-900">
+              This refund will reduce spending unless you delete the row.
+            </p>
           ) : null}
 
           {duplicateWarning ? (
-            <div>
-              <label
-                className="text-sm font-medium"
-                htmlFor={`mobile-duplicate-${row.rowNumber}`}
-              >
-                Possible duplicate
-              </label>
-              <select
-                aria-label="Possible duplicate"
-                className={fieldClassName}
-                id={`mobile-duplicate-${row.rowNumber}`}
-                onChange={(event) =>
-                  onDecisionChange({
-                    duplicateDecision:
-                      (event.target.value as "include" | "exclude") ||
-                      undefined,
-                    rememberCategoryRule: false,
-                  })
-                }
-                value={decision?.duplicateDecision ?? ""}
-              >
-                <option value="">Choose</option>
-                <option value="include">Include row</option>
-                <option value="exclude">Exclude row</option>
-              </select>
-            </div>
+            <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+              Possible duplicate · Delete this row if it should not be imported.
+            </p>
           ) : null}
         </div>
       )}
+
+      <div className="mt-4 border-t pt-3">
+        <RowDeleteButton
+          deleted={deleted}
+          onDecisionChange={onDecisionChange}
+          rowNumber={row.rowNumber}
+        />
+      </div>
     </article>
   );
 }
@@ -755,7 +688,7 @@ function ReviewRow({
   onDecisionChange: (change: Partial<ImportRowDecision>) => void;
   row: CsvReviewRow;
 }>) {
-  const excludedDuplicate = decision?.duplicateDecision === "exclude";
+  const deleted = decision?.excluded === true;
   const merchantTooLong = (decision?.merchant?.trim().length ?? 0) > 120;
   const automaticMatch =
     categorization?.status === "matched" &&
@@ -769,9 +702,8 @@ function ReviewRow({
     row.status === "valid" &&
     row.kind !== "payment" &&
     Boolean(decision?.categoryId) &&
-    !excludedDuplicate &&
-    !automaticMatch &&
-    (row.kind !== "refund" || decision?.refundDecision === "count");
+    !deleted &&
+    !automaticMatch;
 
   return (
     <tr className="border-t align-top" data-row-number={row.rowNumber}>
@@ -800,22 +732,11 @@ function ReviewRow({
             </ul>
           </td>
           <td className="px-3 py-3">
-            <label className="flex min-h-11 items-center gap-2">
-              <input
-                aria-label={`Exclude invalid row ${row.rowNumber}`}
-                checked={decision?.invalidDecision === "exclude"}
-                className="size-5"
-                onChange={(event) =>
-                  onDecisionChange({
-                    invalidDecision: event.target.checked
-                      ? "exclude"
-                      : undefined,
-                  })
-                }
-                type="checkbox"
-              />
-              Exclude invalid row
-            </label>
+            <RowDeleteButton
+              deleted={deleted}
+              onDecisionChange={onDecisionChange}
+              rowNumber={row.rowNumber}
+            />
           </td>
         </>
       ) : (
@@ -830,7 +751,7 @@ function ReviewRow({
               }
               aria-invalid={merchantTooLong}
               className={fieldClassName}
-              disabled={excludedDuplicate}
+              disabled={deleted}
               id={`merchant-${row.rowNumber}`}
               maxLength={120}
               onChange={(event) => {
@@ -893,11 +814,7 @@ function ReviewRow({
                 </label>
                 <select
                   className={fieldClassName}
-                  disabled={
-                    excludedDuplicate ||
-                    (row.kind === "refund" &&
-                      decision?.refundDecision !== "count")
-                  }
+                  disabled={deleted}
                   id={`category-${row.rowNumber}`}
                   onChange={(event) =>
                     onDecisionChange({
@@ -938,73 +855,66 @@ function ReviewRow({
               </>
             )}
           </td>
-          <td className="space-y-3 px-3 py-3">
+          <td className="space-y-2 px-3 py-3">
             {row.kind === "payment" ? (
-              <p className="text-muted-foreground">Excluded from spending</p>
+              <p className="text-muted-foreground text-xs">
+                Excluded from spending
+              </p>
             ) : null}
             {row.kind === "refund" ? (
-              <div>
-                <label
-                  className="text-xs font-medium"
-                  htmlFor={`refund-${row.rowNumber}`}
-                >
-                  Refund
-                </label>
-                <select
-                  className={fieldClassName}
-                  disabled={excludedDuplicate}
-                  id={`refund-${row.rowNumber}`}
-                  onChange={(event) =>
-                    onDecisionChange({
-                      refundDecision:
-                        (event.target.value as "count" | "exclude") ||
-                        undefined,
-                      categoryId:
-                        event.target.value === "count"
-                          ? decision?.categoryId
-                          : "",
-                      rememberCategoryRule: false,
-                    })
-                  }
-                  value={decision?.refundDecision ?? ""}
-                >
-                  <option value="">Choose</option>
-                  <option value="count">Count as refund</option>
-                  <option value="exclude">Exclude from spending</option>
-                </select>
-              </div>
+              <p className="text-xs text-blue-800">Reduces spending</p>
             ) : null}
             {duplicateWarning ? (
-              <div>
-                <label
-                  className="text-xs font-medium"
-                  htmlFor={`duplicate-${row.rowNumber}`}
-                >
-                  Possible duplicate
-                </label>
-                <select
-                  className={fieldClassName}
-                  id={`duplicate-${row.rowNumber}`}
-                  onChange={(event) =>
-                    onDecisionChange({
-                      duplicateDecision:
-                        (event.target.value as "include" | "exclude") ||
-                        undefined,
-                      rememberCategoryRule: false,
-                    })
-                  }
-                  value={decision?.duplicateDecision ?? ""}
-                >
-                  <option value="">Choose</option>
-                  <option value="include">Include row</option>
-                  <option value="exclude">Exclude row</option>
-                </select>
-              </div>
+              <p className="text-xs font-medium text-amber-800">
+                Possible duplicate
+              </p>
             ) : null}
+            <RowDeleteButton
+              deleted={deleted}
+              onDecisionChange={onDecisionChange}
+              rowNumber={row.rowNumber}
+            />
           </td>
         </>
       )}
     </tr>
+  );
+}
+
+function RowDeleteButton({
+  deleted,
+  onDecisionChange,
+  rowNumber,
+}: Readonly<{
+  deleted: boolean;
+  onDecisionChange: (change: Partial<ImportRowDecision>) => void;
+  rowNumber: number;
+}>) {
+  return (
+    <div className="space-y-1">
+      <Button
+        aria-label={`${deleted ? "Restore" : "Delete"} row ${rowNumber}`}
+        className={
+          deleted
+            ? undefined
+            : "border-red-300 text-red-700 hover:bg-red-50 focus-visible:bg-red-50"
+        }
+        onClick={() =>
+          onDecisionChange({
+            excluded: !deleted,
+            rememberCategoryRule: false,
+          })
+        }
+        variant="secondary"
+      >
+        {deleted ? "Restore" : "Delete"}
+      </Button>
+      {deleted ? (
+        <p className="text-muted-foreground text-xs" role="status">
+          Will not import
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -1017,7 +927,7 @@ function ImportResult({
     { label: "Excluded payments", value: summary.excludedPaymentCount },
     { label: "Refund rows", value: summary.refundCount },
     { label: "Duplicate warnings", value: summary.duplicateWarningCount },
-    { label: "Invalid rows excluded", value: summary.invalidExcludedCount },
+    { label: "Invalid rows deleted", value: summary.invalidExcludedCount },
     { label: "Rules learned", value: summary.learnedRuleCount },
   ];
 
@@ -1039,8 +949,8 @@ function ImportResult({
       </div>
       <p className="text-muted-foreground mt-4 text-sm">
         {summary.countedRefundCount} refunds counted,{" "}
-        {summary.excludedRefundCount} excluded from spending, and{" "}
-        {summary.duplicateExcludedCount} duplicate-warning rows excluded.
+        {summary.excludedRefundCount} refunds deleted, and{" "}
+        {summary.duplicateExcludedCount} duplicate-warning rows deleted.
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={onReset}>Review another CSV</Button>
@@ -1089,31 +999,21 @@ function initialDecisions(
 function countUnresolved(
   rows: CsvReviewRow[],
   decisions: Record<number, ImportRowDecision>,
-  duplicateRows: Set<number>,
 ) {
   return rows.filter((row) => {
     const decision = decisions[row.rowNumber];
-    if (row.status === "invalid") {
-      return decision?.invalidDecision !== "exclude";
-    }
-    if (duplicateRows.has(row.rowNumber) && !decision?.duplicateDecision) {
-      return true;
-    }
-    if (decision?.duplicateDecision === "exclude") {
+    if (decision?.excluded) {
       return false;
+    }
+    if (row.status === "invalid") {
+      return true;
     }
     const merchantLength = decision?.merchant?.trim().length ?? 0;
     if (merchantLength === 0 || merchantLength > 120) {
       return true;
     }
-    if (row.kind === "expense") {
+    if (row.kind === "expense" || row.kind === "refund") {
       return !decision?.categoryId;
-    }
-    if (row.kind === "refund") {
-      return (
-        !decision?.refundDecision ||
-        (decision.refundDecision === "count" && !decision.categoryId)
-      );
     }
     return false;
   }).length;

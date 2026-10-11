@@ -26,7 +26,7 @@ The application includes:
 
 - Dashboard totals, category breakdowns, recent expenses, and budget progress
 - Manual expense creation, editing, filtering, search, and deletion
-- Local CSV review and import with refund and duplicate decisions
+- Local CSV review and import with row deletion and refund handling
 - Custom categories and monthly budgets
 - Local database backup and import history
 

@@ -12,9 +12,7 @@ const decisionSchema = z.object({
   rowNumber: z.number().int().min(2),
   merchant: z.string().max(120).optional(),
   categoryId: z.string().optional(),
-  duplicateDecision: z.enum(["include", "exclude"]).optional(),
-  refundDecision: z.enum(["count", "exclude"]).optional(),
-  invalidDecision: z.literal("exclude").optional(),
+  excluded: z.boolean().optional(),
   rememberCategoryRule: z.boolean().optional(),
 });
 
@@ -92,26 +90,24 @@ export function resolveImportRows(
       throw new ImportResolutionError(`Row ${row.rowNumber} needs review.`);
     }
 
-    if (row.status === "invalid") {
-      if (decision.invalidDecision !== "exclude") {
-        throw new ImportResolutionError(
-          `Row ${row.rowNumber} must be explicitly excluded.`,
-        );
+    if (decision.excluded) {
+      if (row.status === "invalid") {
+        resolution.invalidExcludedCount += 1;
+      } else {
+        if (duplicateRows.has(row.rowNumber)) {
+          resolution.duplicateExcludedCount += 1;
+        }
+        if (row.kind === "refund") {
+          resolution.excludedRefundCount += 1;
+        }
       }
-      resolution.invalidExcludedCount += 1;
       continue;
     }
 
-    if (duplicateRows.has(row.rowNumber)) {
-      if (!decision.duplicateDecision) {
-        throw new ImportResolutionError(
-          `Row ${row.rowNumber} needs a duplicate decision.`,
-        );
-      }
-      if (decision.duplicateDecision === "exclude") {
-        resolution.duplicateExcludedCount += 1;
-        continue;
-      }
+    if (row.status === "invalid") {
+      throw new ImportResolutionError(
+        `Row ${row.rowNumber} is invalid and must be deleted.`,
+      );
     }
 
     const merchant = decision.merchant?.trim();
@@ -153,41 +149,23 @@ export function resolveImportRows(
       continue;
     }
 
-    if (!decision.refundDecision) {
-      throw new ImportResolutionError(
-        `Row ${row.rowNumber} needs a refund decision.`,
-      );
+    if (!decision.categoryId) {
+      throw new ImportResolutionError(`Row ${row.rowNumber} needs a category.`);
     }
-
-    if (decision.refundDecision === "count") {
-      if (!decision.categoryId) {
-        throw new ImportResolutionError(
-          `Row ${row.rowNumber} needs a category.`,
-        );
-      }
-      resolution.transactions.push({
-        ...sourceTransaction(row, merchant),
-        spendingAmountMinor: -Math.abs(row.sourceAmountMinor),
-        reviewStatus: "included",
-        categoryId: decision.categoryId,
-      });
-      collectRememberedRule({
-        decision,
-        merchant,
-        categoryId: decision.categoryId,
-        categoryRulesByPattern,
-        rowNumber: row.rowNumber,
-      });
-      resolution.countedRefundCount += 1;
-    } else {
-      resolution.transactions.push({
-        ...sourceTransaction(row, merchant),
-        spendingAmountMinor: 0,
-        reviewStatus: "excluded",
-        categoryId: null,
-      });
-      resolution.excludedRefundCount += 1;
-    }
+    resolution.transactions.push({
+      ...sourceTransaction(row, merchant),
+      spendingAmountMinor: -Math.abs(row.sourceAmountMinor),
+      reviewStatus: "included",
+      categoryId: decision.categoryId,
+    });
+    collectRememberedRule({
+      decision,
+      merchant,
+      categoryId: decision.categoryId,
+      categoryRulesByPattern,
+      rowNumber: row.rowNumber,
+    });
+    resolution.countedRefundCount += 1;
   }
 
   resolution.categoryRules = [...categoryRulesByPattern.values()];
