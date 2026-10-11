@@ -1,3 +1,9 @@
+import {
+  InvalidCategoryRuleError,
+  prepareCategoryRuleInput,
+  type CategoryRuleInput,
+  type PreparedCategoryRuleInput,
+} from "@/lib/category-rule-validation";
 import type { TransactionKind } from "@/lib/constants";
 import { isValidDateOnly } from "@/lib/expense-validation";
 import { prisma } from "@/lib/prisma";
@@ -35,6 +41,7 @@ export type SaveImportInput = {
   rowCount: number;
   importAgain: boolean;
   transactions: ImportTransactionInput[];
+  categoryRules?: CategoryRuleInput[];
 };
 
 export function listRecentImports(limit = 10) {
@@ -51,7 +58,7 @@ export function findImportsByFingerprint(fileFingerprint: string) {
 }
 
 export function saveImportAtomically(input: SaveImportInput) {
-  validateImportInput(input);
+  const categoryRules = validateImportInput(input);
 
   return prisma.$transaction(async (transaction) => {
     if (!input.importAgain) {
@@ -74,7 +81,7 @@ export function saveImportAtomically(input: SaveImportInput) {
       (row) => row.kind === "refund",
     ).length;
 
-    return transaction.importBatch.create({
+    const saved = await transaction.importBatch.create({
       data: {
         fileName: input.fileName,
         fileFingerprint: input.fileFingerprint,
@@ -92,6 +99,31 @@ export function saveImportAtomically(input: SaveImportInput) {
       },
       include: { transactions: true },
     });
+
+    for (const rule of categoryRules) {
+      await transaction.categoryRule.upsert({
+        where: {
+          matchType_normalizedPattern: {
+            matchType: rule.matchType,
+            normalizedPattern: rule.normalizedPattern,
+          },
+        },
+        update: {
+          pattern: rule.pattern,
+          categoryId: rule.categoryId,
+          priority: rule.priority,
+          enabled: true,
+          source: "user",
+        },
+        create: {
+          ...rule,
+          enabled: true,
+          source: "user",
+        },
+      });
+    }
+
+    return { ...saved, learnedRuleCount: categoryRules.length };
   });
 }
 
@@ -113,6 +145,37 @@ function validateImportInput(input: SaveImportInput) {
   for (const row of input.transactions) {
     validateTransaction(row);
   }
+
+  return prepareImportedCategoryRules(input.categoryRules ?? []);
+}
+
+function prepareImportedCategoryRules(categoryRules: CategoryRuleInput[]) {
+  const byPattern = new Map<string, PreparedCategoryRuleInput>();
+
+  for (const categoryRule of categoryRules) {
+    let prepared: PreparedCategoryRuleInput;
+    try {
+      prepared = prepareCategoryRuleInput(categoryRule);
+    } catch (error) {
+      if (error instanceof InvalidCategoryRuleError) {
+        throw new InvalidImportDataError("Imported category rule is invalid.");
+      }
+      throw error;
+    }
+
+    const key = `${prepared.matchType}:${prepared.normalizedPattern}`;
+    const existing = byPattern.get(key);
+    if (existing && existing.categoryId !== prepared.categoryId) {
+      throw new InvalidImportDataError(
+        "The same merchant cannot be remembered with different categories.",
+      );
+    }
+    if (!existing) {
+      byPattern.set(key, prepared);
+    }
+  }
+
+  return [...byPattern.values()];
 }
 
 function validateTransaction(row: ImportTransactionInput) {

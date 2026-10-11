@@ -156,6 +156,57 @@ describe("import row resolution", () => {
     expect(result.invalidExcludedCount).toBe(1);
   });
 
+  it("collects unique remembered exact rules and rejects conflicts", () => {
+    const reviewRows = rows(
+      "2026-01-01,2026-01-02,Purchase,First purchase,10.00,CAD",
+      "2026-01-03,2026-01-04,Purchase,Second purchase,20.00,CAD",
+    );
+    const remembered = resolveImportRows(
+      reviewRows,
+      [
+        decision(2, {
+          merchant: "Sample #123",
+          rememberCategoryRule: true,
+        }),
+        decision(3, {
+          merchant: " sample 123 ",
+          rememberCategoryRule: true,
+        }),
+      ],
+      [],
+    );
+
+    expect(remembered.categoryRules).toEqual([
+      expect.objectContaining({
+        matchType: "exact",
+        pattern: "Sample #123",
+        normalizedPattern: "sample 123",
+        categoryId: "category-1",
+      }),
+    ]);
+
+    expect(() =>
+      resolveImportRows(
+        reviewRows,
+        [
+          decision(2, {
+            merchant: "Sample Merchant",
+            categoryId: "category-1",
+            rememberCategoryRule: true,
+          }),
+          decision(3, {
+            merchant: "sample merchant",
+            categoryId: "category-2",
+            rememberCategoryRule: true,
+          }),
+        ],
+        [],
+      ),
+    ).toThrow(
+      "The same merchant cannot be remembered with different categories.",
+    );
+  });
+
   it("rejects malformed, duplicate, and unknown decision records", () => {
     expect(() => parseImportDecisions("not json")).toThrow(
       ImportResolutionError,

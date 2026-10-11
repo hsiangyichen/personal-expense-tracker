@@ -1,10 +1,12 @@
 import { BudgetForm } from "@/components/budget-form";
+import { CategoryRuleManager } from "@/components/category-rule-manager";
 import { CategoryForm } from "@/components/category-form";
 import { Card, CardTitle } from "@/components/ui/card";
 import { currentMonthKey, isValidMonthKey } from "@/lib/expense-validation";
 import { formatCadFromCents } from "@/lib/money";
 import { listBudgetsForMonth } from "@/lib/repositories/budgets";
 import { listCategories } from "@/lib/repositories/categories";
+import { listCategoryRules } from "@/lib/repositories/category-rules";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +24,10 @@ export default async function CategoriesPage({
     requestedMonth && isValidMonthKey(requestedMonth)
       ? requestedMonth
       : currentMonthKey();
-  const [categories, budgets] = await Promise.all([
+  const [categories, budgets, categoryRules] = await Promise.all([
     listCategories(),
     listBudgetsForMonth(month),
+    listCategoryRules(),
   ]);
   const budgetsByCategory = new Map(
     budgets.map((budget) => [budget.categoryId, budget]),
@@ -150,6 +153,25 @@ export default async function CategoriesPage({
           </ul>
         </Card>
       </div>
+
+      <Card className="mt-6 min-w-0" id="categorization-rules">
+        <CardTitle>Automatic categorization rules</CardTitle>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Match familiar merchant names to categories during CSV review. You can
+          still change every automatic selection before importing.
+        </p>
+        <CategoryRuleManager
+          categories={categories}
+          rules={categoryRules.map((rule) => ({
+            id: rule.id,
+            matchType: rule.matchType,
+            pattern: rule.pattern,
+            priority: rule.priority,
+            enabled: rule.enabled,
+            categoryName: rule.category.name,
+          }))}
+        />
+      </Card>
     </section>
   );
 }
