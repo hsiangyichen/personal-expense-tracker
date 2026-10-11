@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   previewImportAction,
   saveImportAction,
@@ -11,6 +18,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import type { CsvReviewRow } from "@/lib/csv-parser";
+import {
+  importReviewReducer,
+  initialImportReviewState,
+} from "@/lib/import-review-state";
 import type { ImportRowDecision } from "@/lib/import-workflow";
 import { normalizeMerchant } from "@/lib/merchant-normalization";
 import { formatCadFromCents } from "@/lib/money";
@@ -30,14 +41,12 @@ type ImportReviewProps = {
 export function ImportReview({ categories }: ImportReviewProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [hydrated, setHydrated] = useState(false);
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [decisions, setDecisions] = useState<Record<number, ImportRowDecision>>(
-    {},
+  const [state, dispatch] = useReducer(
+    importReviewReducer,
+    initialImportReviewState,
   );
-  const [importAgain, setImportAgain] = useState(false);
-  const [message, setMessage] = useState<string>();
-  const [result, setResult] = useState<ImportSaveSummary | null>(null);
+  const { decisions, importAgain, message, preview, result, selectedFile } =
+    state;
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -76,12 +85,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
     return (
       <ImportResult
         onReset={() => {
-          setResult(null);
-          setPreview(null);
-          setSelectedFile(null);
-          setDecisions({});
-          setImportAgain(false);
-          setMessage(undefined);
+          dispatch({ type: "reset" });
           if (fileInputRef.current) fileInputRef.current.value = "";
         }}
         summary={result}
@@ -109,32 +113,34 @@ export function ImportReview({ categories }: ImportReviewProps) {
             const form = event.currentTarget;
             const file = fileInputRef.current?.files?.[0];
             if (!file) {
-              setMessage("Choose a CSV file to continue.");
+              dispatch({
+                type: "set-message",
+                message: "Choose a CSV file to continue.",
+              });
               return;
             }
 
-            setMessage(undefined);
-            setPreview(null);
-            setSelectedFile(null);
-            setDecisions({});
-            setImportAgain(false);
+            dispatch({ type: "prepare-preview" });
             startTransition(async () => {
               const formData = new FormData(form);
               const response = await previewImportAction(formData);
               if (!response.success) {
-                setMessage(response.message);
+                dispatch({
+                  type: "set-message",
+                  message: response.message,
+                });
                 return;
               }
 
-              setSelectedFile(file);
-              setPreview(response.preview);
-              setDecisions(
-                initialDecisions(
+              dispatch({
+                type: "preview-succeeded",
+                selectedFile: file,
+                preview: response.preview,
+                decisions: initialDecisions(
                   response.preview.rows,
                   response.preview.categorizations,
                 ),
-              );
-              setImportAgain(false);
+              });
             });
           }}
         >
@@ -148,18 +154,12 @@ export function ImportReview({ categories }: ImportReviewProps) {
               id="csv-file"
               name="file"
               disabled={pending}
-              onChange={() => {
-                const hadPreview = Boolean(preview);
-                setPreview(null);
-                setSelectedFile(null);
-                setDecisions({});
-                setImportAgain(false);
-                setMessage(
-                  hadPreview
-                    ? "Review the newly selected file before importing."
-                    : undefined,
-                );
-              }}
+              onChange={() =>
+                dispatch({
+                  type: "file-changed",
+                  hadPreview: Boolean(preview),
+                })
+              }
               ref={fileInputRef}
               type="file"
             />
@@ -193,7 +193,12 @@ export function ImportReview({ categories }: ImportReviewProps) {
                 <input
                   checked={importAgain}
                   className="size-5"
-                  onChange={(event) => setImportAgain(event.target.checked)}
+                  onChange={(event) =>
+                    dispatch({
+                      type: "set-import-again",
+                      value: event.target.checked,
+                    })
+                  }
                   type="checkbox"
                 />
                 Import again
@@ -224,10 +229,11 @@ export function ImportReview({ categories }: ImportReviewProps) {
             decisions={decisions}
             duplicateRows={duplicateRows}
             onDecisionChange={(rowNumber, change) =>
-              setDecisions((current) => ({
-                ...current,
-                [rowNumber]: { ...current[rowNumber], ...change, rowNumber },
-              }))
+              dispatch({
+                type: "update-decision",
+                rowNumber,
+                change,
+              })
             }
             rows={preview.rows}
           />
@@ -248,11 +254,14 @@ export function ImportReview({ categories }: ImportReviewProps) {
                 }
                 onClick={() => {
                   if (!selectedFile) {
-                    setMessage("Choose the CSV again before importing.");
+                    dispatch({
+                      type: "set-message",
+                      message: "Choose the CSV again before importing.",
+                    });
                     return;
                   }
 
-                  setMessage(undefined);
+                  dispatch({ type: "set-message", message: undefined });
                   startTransition(async () => {
                     const formData = new FormData();
                     formData.set("file", selectedFile);
@@ -268,10 +277,16 @@ export function ImportReview({ categories }: ImportReviewProps) {
                     formData.set("importAgain", String(importAgain));
                     const response = await saveImportAction(formData);
                     if (!response.success) {
-                      setMessage(response.message);
+                      dispatch({
+                        type: "set-message",
+                        message: response.message,
+                      });
                       return;
                     }
-                    setResult(response.summary);
+                    dispatch({
+                      type: "import-succeeded",
+                      result: response.summary,
+                    });
                   });
                 }}
               >
@@ -279,11 +294,7 @@ export function ImportReview({ categories }: ImportReviewProps) {
               </Button>
               <Button
                 onClick={() => {
-                  setPreview(null);
-                  setSelectedFile(null);
-                  setDecisions({});
-                  setImportAgain(false);
-                  setMessage(undefined);
+                  dispatch({ type: "reset" });
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
                 variant="secondary"
