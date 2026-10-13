@@ -124,7 +124,7 @@ export default async function ExpensesPage({
             </div>
             <div className="flex items-end gap-2">
               <button
-                className="bg-primary text-primary-foreground inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm hover:bg-blue-700"
+                className="bg-action-primary text-primary-foreground hover:bg-action-primary-hover inline-flex min-h-11 flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm"
                 type="submit"
               >
                 Apply filters

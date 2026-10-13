@@ -71,7 +71,7 @@ export default async function CategoriesPage({
             />
           </div>
           <button
-            className="bg-primary text-primary-foreground inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm hover:bg-blue-700"
+            className="bg-action-primary text-primary-foreground hover:bg-action-primary-hover inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold shadow-sm"
             type="submit"
           >
             View month

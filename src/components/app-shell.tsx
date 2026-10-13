@@ -70,28 +70,19 @@ export function AppShell({ children }: Readonly<{ children: ReactNode }>) {
 function Brand({ inverse = false }: Readonly<{ inverse?: boolean }>) {
   return (
     <Link
-      aria-label="Expense Tracker home"
-      className="flex items-center gap-3"
+      aria-label="BudgetPin home"
+      className="inline-flex items-center"
       href="/"
     >
-      <span className="from-primary to-accent grid size-10 place-items-center rounded-xl bg-gradient-to-br shadow-lg shadow-blue-950/20">
-        <Image
-          alt=""
-          aria-hidden="true"
-          className="size-6 brightness-0 invert"
-          height={24}
-          src="/icon.ico"
-          width={24}
-        />
-      </span>
-      <span
-        className={cn(
-          "text-xl font-bold tracking-tight",
-          inverse ? "text-white" : "text-foreground",
-        )}
-      >
-        Expense Tracker
-      </span>
+      <Image
+        alt=""
+        aria-hidden="true"
+        className={cn("-my-4 h-auto w-40", inverse && "brightness-0 invert")}
+        height={90}
+        priority
+        src="/icons/logo.svg"
+        width={160}
+      />
     </Link>
   );
 }

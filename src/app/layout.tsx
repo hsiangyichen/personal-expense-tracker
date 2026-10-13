@@ -4,8 +4,9 @@ import { AppShell } from "@/components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Personal Expense Tracker",
-  description: "Track personal expenses, CSV imports, categories, and budgets.",
+  title: "BudgetPin",
+  description:
+    "BudgetPin tracks personal expenses, CSV imports, categories, and budgets.",
 };
 
 export default function RootLayout({

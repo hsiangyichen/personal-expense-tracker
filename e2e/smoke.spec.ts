@@ -3,6 +3,10 @@ import { expect, test } from "@playwright/test";
 test("navigates through the application shell", async ({ page }) => {
   await page.goto("/");
 
+  await expect(page).toHaveTitle("BudgetPin");
+  await expect(
+    page.getByRole("link", { name: "BudgetPin home" }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", { level: 1, name: "Dashboard" }),
   ).toBeVisible();

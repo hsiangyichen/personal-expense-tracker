@@ -1,4 +1,4 @@
-# Personal Expense Tracker MVP Development Tasks
+# BudgetPin MVP Development Tasks
 
 This checklist breaks the MVP into small, testable development tasks. Complete tasks in order within each milestone unless a task says otherwise.
 
