@@ -1,6 +1,6 @@
-# Personal Expense Tracker
+# BudgetPin
 
-A local personal web application for recording expenses, importing credit-card CSV files, categorizing spending, setting monthly budgets, and creating SQLite backups.
+BudgetPin is a local personal web application for recording expenses, importing credit-card CSV files, categorizing spending, setting monthly budgets, and creating SQLite backups.
 
 ## Requirements
 

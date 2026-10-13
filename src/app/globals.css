@@ -9,6 +9,8 @@
   --muted-foreground: #61718a;
   --primary: #2f5de0;
   --primary-foreground: #ffffff;
+  --action-primary: #243f66;
+  --action-primary-hover: #14233a;
   --accent: #37a89d;
   --accent-soft: #d8efeb;
   --border: #d8e0eb;
@@ -28,6 +30,8 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-action-primary: var(--action-primary);
+  --color-action-primary-hover: var(--action-primary-hover);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
   --color-border: var(--border);

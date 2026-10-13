@@ -81,7 +81,7 @@ export default async function DashboardPage({
             />
           </div>
           <button
-            className="bg-primary text-primary-foreground inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold shadow-sm hover:bg-blue-700 sm:px-4"
+            className="bg-action-primary text-primary-foreground hover:bg-action-primary-hover inline-flex min-h-10 shrink-0 items-center justify-center rounded-lg px-3 py-2 text-sm font-semibold shadow-sm sm:px-4"
             type="submit"
           >
             View month
